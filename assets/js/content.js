@@ -343,6 +343,13 @@ window.SITE = {
       period: 'May 2016',
       note: 'Skills: Machine Learning',
     },
+    {
+      title: 'Claude Code in Action',
+      org: 'Anthropic',
+      period: 'Ongoing',
+      note: '',
+      link: 'https://anthropic.skilljar.com/claude-code-in-action',
+    },
   ],
 
   /* ---------------------------------------------------------------------

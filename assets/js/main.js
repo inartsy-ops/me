@@ -495,9 +495,12 @@
 
   /* Education entries and certifications share a card shape. */
   function creditCard(c, i) {
+    var title = has(c.link)
+      ? '<a href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a>'
+      : esc(c.title);
     return '<div class="edu-card reveal" data-delay="' + Math.min(i, 3) + '">' +
              (has(c.period) ? '<span class="period">' + esc(c.period) + '</span>' : '') +
-             '<h4>' + esc(c.title) + '</h4>' +
+             '<h4>' + title + '</h4>' +
              '<p class="org">' + esc(c.org) + '</p>' +
              (has(c.note) ? '<p class="note">' + esc(c.note) + '</p>' : '') +
            '</div>';
