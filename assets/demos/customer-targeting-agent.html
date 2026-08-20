@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novartis Oncology · Customer Targeting Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --bg2: #ece9e3;
+  --ink: #1a1a18;
+  --ink2: #4a4a45;
+  --ink3: #8a8a82;
+  --red: #c8102e;
+  --red-light: rgba(200,16,46,0.08);
+  --gold: #b8960c;
+  --gold-light: rgba(184,150,12,0.1);
+  --green: #1a6b3c;
+  --green-light: rgba(26,107,60,0.08);
+  --border: rgba(26,26,24,0.1);
+  --border2: rgba(26,26,24,0.06);
+  --t1: #c8102e;
+  --t2: #b8960c;
+  --t3: #1a6b3c;
+  --shadow: 0 2px 16px rgba(26,26,24,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* Subtle paper texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; }
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--ink);
+  color: #fff;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.novartis-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: #fff;
+}
+.topbar-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
+.topbar-product {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+.topbar-right {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.1em;
+}
+
+/* ── HEADER ── */
+.page-header {
+  padding: 40px 40px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.page-header-left { display: flex; flex-direction: column; gap: 6px; }
+.page-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--ink);
+}
+.page-sub {
+  font-size: 13px;
+  color: var(--ink3);
+  max-width: 520px;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+/* API Key */
+.api-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 360px;
+}
+.api-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink3);
+  white-space: nowrap;
+}
+.api-input {
+  flex: 1;
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  min-width: 0;
+}
+.api-input::placeholder { color: var(--ink3); }
+.api-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; transition: background 0.2s; }
+.api-dot.ok { background: var(--green); }
+
+/* ── PIPELINE ── */
+.pipeline {
+  padding: 28px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.pipeline-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 16px;
+}
+.pipeline-sources {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr) auto;
+  gap: 0;
+  align-items: center;
+}
+.source-node {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  position: relative;
+  transition: all 0.2s;
+  cursor: default;
+}
+.source-node.active { border-color: var(--red); background: var(--red-light); }
+.source-node.done { border-color: var(--green); background: var(--green-light); }
+.source-icon { font-size: 18px; margin-bottom: 4px; }
+.source-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--ink2);
+  line-height: 1.3;
+}
+.source-vendor {
+  font-size: 9px;
+  color: var(--ink3);
+  margin-top: 2px;
+}
+.pipe-arrow {
+  text-align: center;
+  color: var(--ink3);
+  font-size: 14px;
+  padding: 0 4px;
+}
+.model-node {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-align: center;
+  min-width: 90px;
+}
+.model-node-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.model-node-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ── CONTROLS ── */
+.controls-row {
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+.ctrl-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+select {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+select:focus { border-color: var(--red); }
+
+.run-btn {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 28px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.run-btn:hover { background: #a00d25; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,16,46,0.3); }
+.run-btn:disabled { background: var(--ink3); cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── MAIN CONTENT ── */
+.main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 260px); }
+
+/* Sidebar */
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 28px 24px;
+  background: var(--bg2);
+}
+.sidebar-section { margin-bottom: 28px; }
+.sidebar-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Model weights */
+.weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.weight-label { font-size: 12px; color: var(--ink2); flex: 1; }
+.weight-bar-wrap { flex: 1; }
+.weight-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.weight-fill { height: 100%; border-radius: 2px; background: var(--ink); }
+.weight-pct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink2);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Tier thresholds */
+.threshold-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.t1-bg { background: var(--red-light); }
+.t2-bg { background: var(--gold-light); }
+.t3-bg { background: var(--green-light); }
+.threshold-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.t1-color { color: var(--t1); }
+.t2-color { color: var(--t2); }
+.t3-color { color: var(--t3); }
+.threshold-range {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink2);
+}
+.threshold-desc { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+/* Source status */
+.source-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border2);
+}
+.source-status-item:last-child { border-bottom: none; }
+.src-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; transition: background 0.3s; }
+.src-dot.active { background: var(--gold); }
+.src-dot.done { background: var(--green); }
+.src-name { font-size: 12px; color: var(--ink2); flex: 1; }
+.src-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+/* Stats */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.stat-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--ink);
+}
+.stat-lbl { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.stat-box.t1 .stat-n { color: var(--t1); }
+.stat-box.t2 .stat-n { color: var(--t2); }
+.stat-box.t3 .stat-n { color: var(--t3); }
+
+/* ── CONTENT AREA ── */
+.content { padding: 28px 32px; overflow-x: auto; }
+
+/* Loading */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+.loading-step {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.loading-step::before {
+  content: '';
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-sub-text { font-size: 12px; color: var(--ink3); }
+
+/* Empty */
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 10px;
+  color: var(--ink3);
+  font-size: 13px;
+  text-align: center;
+}
+.empty-wrap .big { font-size: 40px; }
+
+/* Error */
+.error-wrap {
+  background: var(--red-light);
+  border: 1px solid rgba(200,16,46,0.2);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+
+/* Tier sections */
+.tier-section { margin-bottom: 36px; animation: fadeUp 0.4s ease both; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.tier-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid;
+}
+.tier-header.t1 { border-color: var(--t1); }
+.tier-header.t2 { border-color: var(--t2); }
+.tier-header.t3 { border-color: var(--t3); }
+.tier-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.t1-txt { color: var(--t1); }
+.t2-txt { color: var(--t2); }
+.t3-txt { color: var(--t3); }
+.tier-desc { font-size: 12px; color: var(--ink3); }
+.tier-count {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+/* HCP Cards */
+.hcp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+
+.hcp-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.hcp-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.hcp-card.open { box-shadow: var(--shadow); }
+
+.hcp-card-top {
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--border2);
+}
+.hcp-rank {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink3);
+  min-width: 28px;
+}
+.hcp-info { flex: 1; min-width: 0; }
+.hcp-name {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hcp-specialty { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.hcp-territory { font-size: 11px; color: var(--ink3); }
+
+.hcp-score-col { text-align: right; }
+.hcp-score-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  line-height: 1;
+}
+.hcp-score-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+}
+
+.hcp-metrics {
+  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border-bottom: 1px solid var(--border2);
+}
+.metric-item { text-align: center; }
+.metric-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+}
+.metric-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--ink3);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+.hcp-signals {
+  padding: 8px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  border-bottom: 1px solid var(--border2);
+}
+.signal-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.sig-iqvia   { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.sig-sp      { background: rgba(168,85,247,0.1); color: #9333ea; }
+.sig-emr     { background: rgba(234,179,8,0.1); color: #ca8a04; }
+.sig-congress { background: rgba(239,68,68,0.1); color: #dc2626; }
+.sig-crm     { background: rgba(20,184,166,0.1); color: #0d9488; }
+.sig-formulary { background: rgba(34,197,94,0.1); color: #16a34a; }
+
+.hcp-toggle-row {
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.toggle-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--red);
+  text-transform: uppercase;
+}
+.chevron { color: var(--ink3); font-size: 14px; transition: transform 0.2s; }
+.hcp-card.open .chevron { transform: rotate(180deg); }
+
+.hcp-detail {
+  display: none;
+  padding: 14px 16px;
+  background: #fafaf8;
+  border-top: 1px solid var(--border2);
+}
+.hcp-card.open .hcp-detail { display: block; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.detail-row { display: flex; flex-direction: column; gap: 2px; }
+.detail-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.detail-val { font-size: 12px; color: var(--ink); font-weight: 500; }
+
+.ai-rationale {
+  background: var(--red-light);
+  border-left: 2px solid var(--red);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+.ai-rationale-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--red);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.ai-rationale-text { font-size: 12px; color: var(--ink2); line-height: 1.6; }
+
+.ai-loading-mini {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.mini-spinner {
+  width: 12px; height: 12px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Score breakdown bar */
+.score-breakdown { margin-top: 10px; }
+.breakdown-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+.breakdown-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.breakdown-lbl { font-size: 11px; color: var(--ink2); width: 110px; flex-shrink: 0; }
+.breakdown-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.breakdown-bar-fill { height: 100%; border-radius: 3px; background: var(--ink); transition: width 0.6s ease; }
+.breakdown-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  width: 28px;
+  text-align: right;
+}
+
+/* Export button */
+.export-row {
+  padding: 16px 0 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.export-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.export-btn:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="novartis-logo">NOVARTIS</div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-product">Oncology Commercial Intelligence</div>
+  </div>
+  <div class="topbar-right" id="topbar-date"></div>
+</div>
+
+<!-- Header -->
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-eyebrow">▸ AI-Powered Targeting</div>
+    <h1>Customer Targeting Agent</h1>
+    <div class="page-sub">Ingests external & internal vendor data, runs the Rx model, and generates a tiered T1/T2/T3 HCP target list for Novartis Oncology brands.</div>
+  </div>
+  <div class="api-row">
+    <div class="api-label">API KEY</div>
+    <input class="api-input" type="password" id="api-key" placeholder="sk-ant-..." />
+    <div class="api-dot" id="api-dot"></div>
+  </div>
+</div>
+
+<!-- Pipeline Visualization -->
+<div class="pipeline">
+  <div class="pipeline-title">Data Pipeline</div>
+  <div class="pipeline-sources">
+    <div class="source-node" id="src-iqvia">
+      <div class="source-icon">💊</div>
+      <div class="source-label">Rx / Claims</div>
+      <div class="source-vendor">IQVIA · Symphony</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="source-node" id="src-sp">
+      <div class="source-icon">🏥</div>
+      <div class="source-label">Specialty Pharmacy</div>
+      <div class="source-vendor">SPP Network</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="source-node" id="src-emr">
+      <div class="source-icon">📋</div>
+      <div class="source-label">EMR / EHR</div>
+      <div class="source-vendor">Epic · Flatiron</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="source-node" id="src-congress">
+      <div class="source-icon">🎤</div>
+      <div class="source-label">Congress / KOL</div>
+      <div class="source-vendor">ASCO · ESMO</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="source-node" id="src-crm">
+      <div class="source-icon">📞</div>
+      <div class="source-label">CRM / Calls</div>
+      <div class="source-vendor">Veeva · Internal</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="source-node" id="src-mc">
+      <div class="source-icon">📄</div>
+      <div class="source-label">Managed Care</div>
+      <div class="source-vendor">Formulary DB</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="model-node">
+      <div class="model-node-label">Rx Model</div>
+      <div class="model-node-sub">Score + Tier</div>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-row">
+  <div class="ctrl-group">
+    <div class="ctrl-label">Brand</div>
+    <select id="brand">
+      <option>Kisqali (CDK4/6i)</option>
+      <option>Kymriah (CAR-T)</option>
+      <option>Lutathera (PRRT)</option>
+      <option>Scemblix (BCR-ABL)</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Indication</div>
+    <select id="indication">
+      <option>HR+/HER2- Breast Cancer</option>
+      <option>Diffuse Large B-Cell Lymphoma</option>
+      <option>Gastroenteropancreatic NETs</option>
+      <option>Chronic Myeloid Leukemia</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Territory</div>
+    <select id="territory">
+      <option value="All">All Territories</option>
+      <option>Northeast</option>
+      <option>Southeast</option>
+      <option>Midwest</option>
+      <option>Southwest</option>
+      <option>Northwest</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Data Period</div>
+    <select id="period">
+      <option>Last 12 Months</option>
+      <option>Last 6 Months</option>
+      <option>Last 3 Months</option>
+    </select>
+  </div>
+  <button class="run-btn" id="run-btn" onclick="runTargeting()">
+    ▶ RUN TARGETING MODEL
+  </button>
+</div>
+
+<!-- Main Layout -->
+<div class="main">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Rx Model Weights</div>
+      <div class="weight-item">
+        <div class="weight-label">Rx Volume & Decile</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:35%"></div></div>
+        </div>
+        <div class="weight-pct">35%</div>
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">HCP Engagement Score</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:25%"></div></div>
+        </div>
+        <div class="weight-pct">25%</div>
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">SP Patient Volume</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:15%"></div></div>
+        </div>
+        <div class="weight-pct">15%</div>
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">EMR Signal Strength</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:12%"></div></div>
+        </div>
+        <div class="weight-pct">12%</div>
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">Formulary Access</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:8%"></div></div>
+        </div>
+        <div class="weight-pct">8%</div>
+      </div>
+      <div class="weight-item">
+        <div class="weight-label">Congress Activity</div>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar"><div class="weight-fill" style="width:5%"></div></div>
+        </div>
+        <div class="weight-pct">5%</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Tier Thresholds</div>
+      <div class="threshold-item t1-bg">
+        <div>
+          <div class="tier-badge t1-txt">TIER 1</div>
+          <div class="threshold-desc">High priority · Max engagement</div>
+        </div>
+        <div class="threshold-range">Score ≥ 70</div>
+      </div>
+      <div class="threshold-item t2-bg">
+        <div>
+          <div class="tier-badge t2-txt">TIER 2</div>
+          <div class="threshold-desc">Medium priority · Regular contact</div>
+        </div>
+        <div class="threshold-range">40–69</div>
+      </div>
+      <div class="threshold-item t3-bg">
+        <div>
+          <div class="tier-badge t3-txt">TIER 3</div>
+          <div class="threshold-desc">Watch list · Periodic outreach</div>
+        </div>
+        <div class="threshold-range">Score &lt; 40</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Data Source Status</div>
+      <div class="source-status-item"><div class="src-dot" id="ss-iqvia"></div><div class="src-name">Rx / Claims (IQVIA)</div><div class="src-count" id="sc-iqvia">—</div></div>
+      <div class="source-status-item"><div class="src-dot" id="ss-sp"></div><div class="src-name">Specialty Pharmacy</div><div class="src-count" id="sc-sp">—</div></div>
+      <div class="source-status-item"><div class="src-dot" id="ss-emr"></div><div class="src-name">EMR / EHR Signals</div><div class="src-count" id="sc-emr">—</div></div>
+      <div class="source-status-item"><div class="src-dot" id="ss-congress"></div><div class="src-name">Congress / KOL</div><div class="src-count" id="sc-congress">—</div></div>
+      <div class="source-status-item"><div class="src-dot" id="ss-crm"></div><div class="src-name">CRM / Call History</div><div class="src-count" id="sc-crm">—</div></div>
+      <div class="source-status-item"><div class="src-dot" id="ss-mc"></div><div class="src-name">Managed Care</div><div class="src-count" id="sc-mc">—</div></div>
+    </div>
+
+    <div class="sidebar-section" id="stats-section" style="display:none">
+      <div class="sidebar-title">Target Summary</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-n" id="stat-total">—</div><div class="stat-lbl">Total HCPs</div></div>
+        <div class="stat-box t1"><div class="stat-n" id="stat-t1">—</div><div class="stat-lbl">Tier 1</div></div>
+        <div class="stat-box t2"><div class="stat-n" id="stat-t2">—</div><div class="stat-lbl">Tier 2</div></div>
+        <div class="stat-box t3"><div class="stat-n" id="stat-t3">—</div><div class="stat-lbl">Tier 3</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content">
+    <div class="empty-wrap">
+      <div class="big">🎯</div>
+      <div>Configure filters and run the targeting model.</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Ingests 6 data sources · Rx model scoring · T1/T2/T3 output</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── Date ─────────────────────────────────────────────────────
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+
+// ── API key dot ───────────────────────────────────────────────
+document.getElementById('api-key').addEventListener('input', e => {
+  document.getElementById('api-dot').className = 'api-dot' + (e.target.value.startsWith('sk-ant-') ? ' ok' : '');
+});
+
+// ── Dummy HCP Universe ────────────────────────────────────────
+const HCP_UNIVERSE = [
+  // NPI, Name, Specialty, Territory, Rx12m, BrandRx, SPPatients, EMRScore, CongressActivity, CRMCalls, CRMSamples, FormularyAccess, CompetitorRx
+  {npi:'1111111111',name:'Dr. Elena Vasquez',      specialty:'Medical Oncology',      territory:'Northeast', rx12m:320, brandRx:55, spPatients:18, emrScore:85, congress:true,  crmCalls:8, crmSamples:12, formulary:'Preferred',    compRx:40},
+  {npi:'2222222222',name:'Dr. James Okafor',       specialty:'Hematology/Oncology',   territory:'Northeast', rx12m:248, brandRx:38, spPatients:12, emrScore:72, congress:true,  crmCalls:6, crmSamples:8,  formulary:'Non-Preferred', compRx:55},
+  {npi:'3333333333',name:'Dr. Sandra Kim',         specialty:'Breast Oncology',       territory:'Northeast', rx12m:195, brandRx:30, spPatients:9,  emrScore:65, congress:false, crmCalls:4, crmSamples:6,  formulary:'Preferred',    compRx:30},
+  {npi:'4444444444',name:'Dr. Robert Simmons',     specialty:'Medical Oncology',      territory:'Southeast', rx12m:390, brandRx:62, spPatients:22, emrScore:90, congress:true,  crmCalls:10,crmSamples:15, formulary:'Preferred',    compRx:35},
+  {npi:'5555555555',name:'Dr. Angela Huang',       specialty:'Gynecologic Oncology',  territory:'Southeast', rx12m:280, brandRx:42, spPatients:14, emrScore:78, congress:false, crmCalls:7, crmSamples:10, formulary:'Preferred',    compRx:48},
+  {npi:'6666666666',name:'Dr. Thomas Briggs',      specialty:'Hematology/Oncology',   territory:'Southeast', rx12m:160, brandRx:22, spPatients:7,  emrScore:55, congress:true,  crmCalls:3, crmSamples:4,  formulary:'Non-Preferred', compRx:70},
+  {npi:'7777777777',name:'Dr. Fatima Al-Hassan',   specialty:'Medical Oncology',      territory:'Midwest',   rx12m:130, brandRx:18, spPatients:5,  emrScore:48, congress:false, crmCalls:2, crmSamples:3,  formulary:'Non-Formulary', compRx:65},
+  {npi:'8888888888',name:'Dr. Brian Choi',         specialty:'Thoracic Oncology',     territory:'Midwest',   rx12m:210, brandRx:32, spPatients:10, emrScore:68, congress:false, crmCalls:5, crmSamples:7,  formulary:'Preferred',    compRx:42},
+  {npi:'9999999999',name:'Dr. Grace Okonkwo',      specialty:'Pediatric Oncology',    territory:'Midwest',   rx12m:175, brandRx:28, spPatients:8,  emrScore:62, congress:true,  crmCalls:4, crmSamples:5,  formulary:'Preferred',    compRx:38},
+  {npi:'1010101010',name:'Dr. Nina Reyes',         specialty:'Medical Oncology',      territory:'Southwest', rx12m:305, brandRx:50, spPatients:16, emrScore:82, congress:true,  crmCalls:9, crmSamples:13, formulary:'Preferred',    compRx:30},
+  {npi:'1122334455',name:'Dr. Marcus Webb',        specialty:'Radiation Oncology',    territory:'Southwest', rx12m:95,  brandRx:10, spPatients:3,  emrScore:38, congress:false, crmCalls:1, crmSamples:2,  formulary:'Non-Preferred', compRx:50},
+  {npi:'2233445566',name:'Dr. Priya Nair',         specialty:'Medical Oncology',      territory:'Southwest', rx12m:58,  brandRx:6,  spPatients:2,  emrScore:28, congress:false, crmCalls:1, crmSamples:1,  formulary:'Non-Formulary', compRx:30},
+  {npi:'3344556677',name:'Dr. David Chen',         specialty:'Breast Oncology',       territory:'Northwest', rx12m:260, brandRx:44, spPatients:13, emrScore:75, congress:false, crmCalls:6, crmSamples:9,  formulary:'Preferred',    compRx:45},
+  {npi:'4455667788',name:'Dr. Maria Santos',       specialty:'Medical Oncology',      territory:'Northwest', rx12m:188, brandRx:29, spPatients:8,  emrScore:60, congress:false, crmCalls:4, crmSamples:6,  formulary:'Preferred',    compRx:50},
+  {npi:'5566778899',name:'Dr. Kevin O\'Brien',     specialty:'Hematology/Oncology',   territory:'Northwest', rx12m:72,  brandRx:8,  spPatients:2,  emrScore:32, congress:false, crmCalls:1, crmSamples:1,  formulary:'Non-Formulary', compRx:28},
+  {npi:'6677889900',name:'Dr. Aisha Patel',        specialty:'Medical Oncology',      territory:'Northeast', rx12m:340, brandRx:58, spPatients:20, emrScore:88, congress:true,  crmCalls:9, crmSamples:14, formulary:'Preferred',    compRx:25},
+  {npi:'7788990011',name:'Dr. Carlos Rivera',      specialty:'GI Oncology',           territory:'Southeast', rx12m:145, brandRx:20, spPatients:6,  emrScore:50, congress:false, crmCalls:3, crmSamples:4,  formulary:'Non-Preferred', compRx:60},
+  {npi:'8899001122',name:'Dr. Yuki Tanaka',        specialty:'Neuro-Oncology',        territory:'Midwest',   rx12m:88,  brandRx:12, spPatients:3,  emrScore:40, congress:false, crmCalls:2, crmSamples:2,  formulary:'Non-Formulary', compRx:35},
+];
+
+// ── Rx Model Scoring ──────────────────────────────────────────
+function scoreHCP(h) {
+  const maxRx = Math.max(...HCP_UNIVERSE.map(x=>x.rx12m));
+  const maxBrand = Math.max(...HCP_UNIVERSE.map(x=>x.brandRx));
+  const maxSP = Math.max(...HCP_UNIVERSE.map(x=>x.spPatients));
+  const maxCalls = Math.max(...HCP_UNIVERSE.map(x=>x.crmCalls));
+
+  // Rx decile: 1-10 based on rank
+  const sorted = [...HCP_UNIVERSE].sort((a,b)=>b.rx12m-a.rx12m);
+  const rank = sorted.findIndex(x=>x.npi===h.npi)+1;
+  const decile = Math.ceil(rank / (HCP_UNIVERSE.length/10));
+  const rxDecile = 11 - decile;
+
+  // Component scores (0-100 each)
+  const rxScore = ((h.brandRx/maxBrand)*0.6 + (rxDecile/10)*0.4) * 100;
+  const engScore = ((h.crmCalls/maxCalls)*0.5 + (h.crmSamples/Math.max(...HCP_UNIVERSE.map(x=>x.crmSamples)))*0.5) * 100;
+  const spScore = (h.spPatients/maxSP) * 100;
+  const emrScore = h.emrScore;
+  const formularyScore = h.formulary==='Preferred'?100:h.formulary==='Non-Preferred'?50:10;
+  const congressScore = h.congress ? 100 : 0;
+
+  // Weighted total
+  const total = (
+    rxScore     * 0.35 +
+    engScore    * 0.25 +
+    spScore     * 0.15 +
+    emrScore    * 0.12 +
+    formularyScore * 0.08 +
+    congressScore  * 0.05
+  );
+
+  const tier = total >= 70 ? 1 : total >= 40 ? 2 : 3;
+
+  return {
+    ...h,
+    rxDecile,
+    rx_score_component: Math.round(rxScore),
+    eng_score_component: Math.round(engScore),
+    sp_score_component: Math.round(spScore),
+    emr_score_component: Math.round(h.emrScore),
+    formulary_score_component: Math.round(formularyScore),
+    congress_score_component: Math.round(congressScore),
+    total_score: Math.round(total),
+    tier,
+  };
+}
+
+function getSignalChips(h) {
+  const chips = [];
+  if (h.rx12m > 200) chips.push({label:'High Rx Volume', cls:'sig-iqvia'});
+  if (h.spPatients > 10) chips.push({label:'High SP Volume', cls:'sig-sp'});
+  if (h.emrScore > 70) chips.push({label:'Strong EMR Signal', cls:'sig-emr'});
+  if (h.congress) chips.push({label:'KOL / Congress', cls:'sig-congress'});
+  if (h.crmCalls >= 6) chips.push({label:'High Engagement', cls:'sig-crm'});
+  if (h.formulary==='Preferred') chips.push({label:'Preferred Formulary', cls:'sig-formulary'});
+  return chips;
+}
+
+// ── Animate pipeline sources ───────────────────────────────────
+const SOURCES = [
+  {node:'src-iqvia', dot:'ss-iqvia', count:'sc-iqvia', label:'18 HCPs · 12mo claims'},
+  {node:'src-sp',    dot:'ss-sp',    count:'sc-sp',    label:'1,240 Rx events'},
+  {node:'src-emr',   dot:'ss-emr',   count:'sc-emr',   label:'8 SP accounts'},
+  {node:'src-congress',dot:'ss-congress',count:'sc-congress',label:'EMR flags: 18'},
+  {node:'src-crm',   dot:'ss-crm',   count:'sc-crm',   label:'6 KOL events'},
+  {node:'src-mc',    dot:'ss-mc',    count:'sc-mc',    label:'342 call records'},
+];
+
+async function animatePipeline() {
+  const steps = [
+    {node:'src-iqvia',  dot:'ss-iqvia',    count:'sc-iqvia',   label:'18 HCPs · 12mo claims'},
+    {node:'src-sp',     dot:'ss-sp',       count:'sc-sp',      label:'1,240 Rx events'},
+    {node:'src-emr',    dot:'ss-emr',      count:'sc-emr',     label:'8 SP accounts'},
+    {node:'src-congress',dot:'ss-congress',count:'sc-congress', label:'6 KOL events'},
+    {node:'src-crm',    dot:'ss-crm',      count:'sc-crm',     label:'342 call records'},
+    {node:'src-mc',     dot:'ss-mc',       count:'sc-mc',      label:'22 formulary plans'},
+  ];
+  for (const s of steps) {
+    document.getElementById(s.node).className = 'source-node active';
+    document.getElementById(s.dot).className = 'src-dot active';
+    setContent(`<div class="loading-wrap"><div class="loading-step">Loading ${s.node.replace('src-','').toUpperCase()} data...</div><div class="loading-sub-text">${s.label}</div></div>`);
+    await sleep(600);
+    document.getElementById(s.node).className = 'source-node done';
+    document.getElementById(s.dot).className = 'src-dot done';
+    document.getElementById(s.count).textContent = s.label;
+  }
+}
+
+// ── Generate AI rationale via Claude ─────────────────────────
+async function getAIRationale(hcp, apiKey) {
+  const prompt = `You are a pharma commercial analytics expert at Novartis Oncology.
+
+Write a 2-sentence targeting rationale for this HCP explaining WHY they are a ${['','Tier 1','Tier 2','Tier 3'][hcp.tier]} target for a Novartis oncology brand.
+
+HCP: ${hcp.name}, ${hcp.specialty}, ${hcp.territory}
+Rx Model Score: ${hcp.total_score}/100
+Brand Rx (12m): ${hcp.brandRx} | Total Rx: ${hcp.rx12m} | Rx Decile: ${hcp.rxDecile}
+SP Patients: ${hcp.spPatients} | EMR Score: ${hcp.emrScore}
+Congress/KOL: ${hcp.congress?'Yes':'No'} | CRM Calls: ${hcp.crmCalls} | Formulary: ${hcp.formulary}
+Competitor Rx: ${hcp.compRx}
+
+Be specific, data-driven, and concise. Do NOT use bullet points. Return only the 2-sentence rationale.`;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      // Required for calls made directly from a browser — without it the
+      // request is rejected by CORS before it ever reaches the API.
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 150,
+      messages: [{role:'user',content:prompt}]
+    })
+  });
+  if (!r.ok) throw new Error('API error');
+  const d = await r.json();
+  return d.content[0].text.trim();
+}
+
+// ── Render ────────────────────────────────────────────────────
+function setContent(html) {
+  document.getElementById('content').innerHTML = html;
+}
+
+function tierColor(t) { return ['','t1-txt','t2-txt','t3-txt'][t]; }
+function tierBg(t) { return ['','t1-bg','t2-bg','t3-bg'][t]; }
+function tierLabel(t) { return ['','TIER 1','TIER 2','TIER 3'][t]; }
+function tierDesc(t) { return ['','High Priority · Maximum Engagement','Medium Priority · Regular Contact','Watch List · Periodic Outreach'][t]; }
+
+function renderHCPCard(h, globalRank, apiKey) {
+  const chips = getSignalChips(h);
+  const id = `card-${h.npi}`;
+  return `
+    <div class="hcp-card" id="${id}" onclick="toggleCard('${id}','${h.npi}','${apiKey}')">
+      <div class="hcp-card-top">
+        <div class="hcp-rank">${globalRank}</div>
+        <div class="hcp-info">
+          <div class="hcp-name">${h.name}</div>
+          <div class="hcp-specialty">${h.specialty}</div>
+          <div class="hcp-territory">${h.territory}</div>
+        </div>
+        <div class="hcp-score-col">
+          <div class="hcp-score-num ${tierColor(h.tier)}">${h.total_score}</div>
+          <div class="hcp-score-label">RX MODEL SCORE</div>
+        </div>
+      </div>
+      <div class="hcp-metrics">
+        <div class="metric-item">
+          <div class="metric-val">${h.brandRx}</div>
+          <div class="metric-lbl">Brand Rx</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-val">${h.rxDecile}</div>
+          <div class="metric-lbl">Rx Decile</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-val">${h.crmCalls}</div>
+          <div class="metric-lbl">CRM Calls</div>
+        </div>
+      </div>
+      <div class="hcp-signals">
+        ${chips.map(c=>`<span class="signal-chip ${c.cls}">${c.label}</span>`).join('')}
+      </div>
+      <div class="hcp-toggle-row">
+        <div class="toggle-label">View Breakdown & AI Rationale</div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="hcp-detail" id="detail-${h.npi}">
+        <div class="detail-grid">
+          <div class="detail-row"><div class="detail-lbl">Total Rx (12m)</div><div class="detail-val">${h.rx12m}</div></div>
+          <div class="detail-row"><div class="detail-lbl">SP Patients</div><div class="detail-val">${h.spPatients}</div></div>
+          <div class="detail-row"><div class="detail-lbl">EMR Signal</div><div class="detail-val">${h.emrScore}/100</div></div>
+          <div class="detail-row"><div class="detail-lbl">Competitor Rx</div><div class="detail-val">${h.compRx} (switch opp.)</div></div>
+          <div class="detail-row"><div class="detail-lbl">Formulary Status</div><div class="detail-val">${h.formulary}</div></div>
+          <div class="detail-row"><div class="detail-lbl">Congress / KOL</div><div class="detail-val">${h.congress?'✓ Active':'—'}</div></div>
+          <div class="detail-row"><div class="detail-lbl">CRM Samples</div><div class="detail-val">${h.crmSamples}</div></div>
+          <div class="detail-row"><div class="detail-lbl">NPI</div><div class="detail-val">${h.npi}</div></div>
+        </div>
+        <div class="score-breakdown">
+          <div class="breakdown-title">Score Breakdown</div>
+          <div class="breakdown-row"><div class="breakdown-lbl">Rx Volume & Decile</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.rx_score_component}%"></div></div><div class="breakdown-val">${h.rx_score_component}</div></div>
+          <div class="breakdown-row"><div class="breakdown-lbl">HCP Engagement</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.eng_score_component}%"></div></div><div class="breakdown-val">${h.eng_score_component}</div></div>
+          <div class="breakdown-row"><div class="breakdown-lbl">SP Patient Volume</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.sp_score_component}%"></div></div><div class="breakdown-val">${h.sp_score_component}</div></div>
+          <div class="breakdown-row"><div class="breakdown-lbl">EMR Signal</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.emr_score_component}%"></div></div><div class="breakdown-val">${h.emr_score_component}</div></div>
+          <div class="breakdown-row"><div class="breakdown-lbl">Formulary Access</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.formulary_score_component}%"></div></div><div class="breakdown-val">${h.formulary_score_component}</div></div>
+          <div class="breakdown-row"><div class="breakdown-lbl">Congress Activity</div><div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${h.congress_score_component}%"></div></div><div class="breakdown-val">${h.congress_score_component}</div></div>
+        </div>
+        <div class="ai-rationale" id="rationale-${h.npi}">
+          <div class="ai-rationale-label">AI Targeting Rationale</div>
+          <div class="ai-loading-mini"><div class="mini-spinner"></div>Generating rationale...</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderResults(scored, territory, apiKey) {
+  let filtered = territory === 'All' ? scored : scored.filter(h=>h.territory===territory);
+  filtered.sort((a,b)=>b.total_score-a.total_score);
+
+  const t1 = filtered.filter(h=>h.tier===1);
+  const t2 = filtered.filter(h=>h.tier===2);
+  const t3 = filtered.filter(h=>h.tier===3);
+
+  // Stats
+  document.getElementById('stats-section').style.display='block';
+  document.getElementById('stat-total').textContent = filtered.length;
+  document.getElementById('stat-t1').textContent = t1.length;
+  document.getElementById('stat-t2').textContent = t2.length;
+  document.getElementById('stat-t3').textContent = t3.length;
+
+  let globalRank = 1;
+  function renderSection(hcps, tier) {
+    if (!hcps.length) return '';
+    const cards = hcps.map(h => renderHCPCard(h, globalRank++, apiKey)).join('');
+    return `
+      <div class="tier-section" style="animation-delay:${(tier-1)*0.1}s">
+        <div class="tier-header t${tier}">
+          <div class="tier-badge ${tierColor(tier)}">${tierLabel(tier)}</div>
+          <div><div style="font-size:13px;font-weight:600">${tierDesc(tier)}</div><div class="tier-desc">Score threshold: ${tier===1?'≥ 70':tier===2?'40–69':'< 40'}</div></div>
+          <div class="tier-count">${hcps.length} HCP${hcps.length!==1?'s':''}</div>
+        </div>
+        <div class="hcp-grid">${cards}</div>
+      </div>`;
+  }
+
+  const html = renderSection(t1,1) + renderSection(t2,2) + renderSection(t3,3) + `
+    <div class="export-row">
+      <button class="export-btn" onclick="exportCSV(window._lastScored, '${territory}')">↓ Export Target List (CSV)</button>
+    </div>`;
+  setContent(html);
+}
+
+// ── Card toggle + lazy AI rationale ──────────────────────────
+const rationaleCache = {};
+async function toggleCard(cardId, npi, apiKey) {
+  const card = document.getElementById(cardId);
+  card.classList.toggle('open');
+  if (!card.classList.contains('open')) return;
+
+  // Generate AI rationale once
+  if (rationaleCache[npi]) {
+    document.getElementById(`rationale-${npi}`).innerHTML =
+      `<div class="ai-rationale-label">AI Targeting Rationale</div><div class="ai-rationale-text">${rationaleCache[npi]}</div>`;
+    return;
+  }
+  if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+    document.getElementById(`rationale-${npi}`).innerHTML =
+      `<div class="ai-rationale-label">AI Targeting Rationale</div><div class="ai-rationale-text" style="color:var(--ink3)">Enter a valid API key to generate AI rationale.</div>`;
+    return;
+  }
+  const hcp = window._lastScored.find(h=>h.npi===npi);
+  if (!hcp) return;
+  try {
+    const text = await getAIRationale(hcp, apiKey);
+    rationaleCache[npi] = text;
+    document.getElementById(`rationale-${npi}`).innerHTML =
+      `<div class="ai-rationale-label">AI Targeting Rationale</div><div class="ai-rationale-text">${text}</div>`;
+  } catch(e) {
+    document.getElementById(`rationale-${npi}`).innerHTML =
+      `<div class="ai-rationale-label">AI Targeting Rationale</div><div class="ai-rationale-text" style="color:var(--ink3)">Could not generate rationale: ${e.message}</div>`;
+  }
+}
+
+// ── CSV Export ────────────────────────────────────────────────
+function exportCSV(scored, territory) {
+  const filtered = territory==='All' ? scored : scored.filter(h=>h.territory===territory);
+  filtered.sort((a,b)=>b.total_score-a.total_score);
+  const headers = ['Rank','NPI','Name','Specialty','Territory','Tier','Total Score','Rx Decile','Brand Rx','Total Rx','SP Patients','EMR Score','CRM Calls','Formulary','Congress KOL'];
+  const rows = filtered.map((h,i)=>[
+    i+1,h.npi,h.name,h.specialty,h.territory,`Tier ${h.tier}`,h.total_score,
+    h.rxDecile,h.brandRx,h.rx12m,h.spPatients,h.emrScore,h.crmCalls,h.formulary,h.congress?'Yes':'No'
+  ]);
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `novartis_oncology_targets_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Main run ──────────────────────────────────────────────────
+async function runTargeting() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const territory = document.getElementById('territory').value;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+
+  // Reset source dots
+  ['iqvia','sp','emr','congress','crm','mc'].forEach(s=>{
+    document.getElementById(`ss-${s}`).className='src-dot';
+    document.getElementById(`sc-${s}`).textContent='—';
+    document.getElementById(`src-${s}`).className='source-node';
+  });
+
+  await animatePipeline();
+
+  setContent(`<div class="loading-wrap"><div class="loading-step">Running Rx model scoring...</div><div class="loading-sub-text">Applying weights: Rx volume 35% · Engagement 25% · SP 15% · EMR 12% · Formulary 8% · Congress 5%</div></div>`);
+  await sleep(900);
+
+  setContent(`<div class="loading-wrap"><div class="loading-step">Assigning T1/T2/T3 tiers...</div><div class="loading-sub-text">Score ≥ 70 → Tier 1 · 40–69 → Tier 2 · &lt;40 → Tier 3</div></div>`);
+  await sleep(700);
+
+  const scored = HCP_UNIVERSE.map(scoreHCP);
+  window._lastScored = scored;
+
+  renderResults(scored, territory, apiKey);
+  btn.disabled = false;
+}
+
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>

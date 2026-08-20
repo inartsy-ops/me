@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBA Decision Engine · Novartis Oncology</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080d18;--s950:#0a1020;--s900:#0f1929;--s800:#162035;--s700:#1e2d47;--s600:#2a3d5c;
+  --s400:#6b84a0;--s300:#9ab0c8;--s100:#dde8f4;
+  --amber:#f59e0b;--adim:rgba(245,158,11,0.12);--aglow:0 0 20px rgba(245,158,11,0.3);
+  --cyan:#06b6d4;--cdim:rgba(6,182,212,0.1);
+  --green:#10b981;--gdim:rgba(16,185,129,0.1);
+  --red:#ef4444;--rdim:rgba(239,68,68,0.1);
+  --violet:#8b5cf6;--vdim:rgba(139,92,246,0.1);
+  --bdr:rgba(255,255,255,0.06);--bdrb:rgba(255,255,255,0.1);
+  --fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'Share Tech Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--fb);background:var(--bg);color:var(--s100);display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(6,182,212,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* TOPBAR */
+.topbar{height:48px;background:var(--s950);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;z-index:100;position:relative}
+.tlogo{font-family:var(--fd);font-size:18px;font-weight:800;letter-spacing:2px;color:#fff;display:flex;align-items:center;gap:10px}
+.ticon{width:28px;height:28px;background:var(--amber);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.tsep{width:1px;height:24px;background:var(--bdrb)}
+.tprod{font-family:var(--fm);font-size:10px;color:var(--s400);letter-spacing:.1em}
+.tsep2{flex:1}
+.tstatus{font-family:var(--fm);font-size:10px;color:var(--s400);display:flex;align-items:center;gap:6px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--s600)}
+.sdot.live{background:var(--green);box-shadow:0 0 6px rgba(16,185,129,.5);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* PIPELINE */
+.pipeline{padding:12px 20px;background:var(--s950);border-bottom:1px solid var(--bdr);display:flex;align-items:center;flex-shrink:0;position:relative;z-index:10}
+.stage{display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .2s;flex:1;border:1px solid transparent}
+.stage:hover{background:rgba(255,255,255,.02)}
+.stage.active{background:var(--adim);border-color:rgba(245,158,11,.2)}
+.stage.done{background:var(--gdim);border-color:rgba(16,185,129,.15);cursor:pointer}
+.stage.locked{opacity:.4;cursor:not-allowed}
+.stage-num{font-family:var(--fm);font-size:10px;color:var(--s400);width:20px;height:20px;border-radius:50%;border:1px solid var(--s600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stage.active .stage-num{border-color:var(--amber);color:var(--amber)}
+.stage.done .stage-num{border-color:var(--green);color:var(--green)}
+.stage-label{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--s300)}
+.stage.active .stage-label{color:var(--amber)}
+.stage.done .stage-label{color:var(--green)}
+.stage-sub{font-family:var(--fm);font-size:8px;color:var(--s400);margin-top:1px}
+.parrow{color:var(--s700);font-size:16px;padding:0 6px;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;position:relative;z-index:1}
+.screen{display:none;height:100%;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* FOOTER */
+.footer{padding:12px 20px;border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:var(--s950);flex-shrink:0}
+.fstat{font-family:var(--fm);font-size:10px;color:var(--s400)}
+.fstat span{color:var(--amber)}
+.fbtnrow{display:flex;gap:8px}
+.nbtn{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:1px;padding:9px 24px;border-radius:7px;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.ba{background:var(--amber);color:#000}.ba:hover{background:#fbbf24;transform:translateY(-1px);box-shadow:var(--aglow)}
+.ba:disabled{background:var(--s700);color:var(--s400);cursor:not-allowed;transform:none;box-shadow:none}
+.bc{background:var(--cyan);color:#000}.bc:hover{background:#22d3ee;transform:translateY(-1px)}
+.bg{background:var(--green);color:#000}.bg:hover{background:#34d399;transform:translateY(-1px)}
+.bv{background:var(--violet);color:#fff}.bv:hover{background:#a78bfa;transform:translateY(-1px)}
+
+/* ── S1 ── */
+.s1b{flex:1;overflow-y:auto;padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.s1b::-webkit-scrollbar{width:4px}
+.s1b::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.sgrp{background:var(--s900);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.sgh{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:9px}
+.sgicon{font-size:16px}
+.sgtitle{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:.5px;color:#fff}
+.sgbadge{font-family:var(--fm);font-size:8px;padding:2px 7px;border-radius:3px;margin-left:auto}
+.ext{background:rgba(6,182,212,.1);color:var(--cyan);border:1px solid rgba(6,182,212,.2)}
+.int{background:var(--adim);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.sgfiles{padding:10px 16px;display:flex;flex-direction:column;gap:7px}
+.frow{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--s800);border-radius:6px;border:1px solid var(--bdr);transition:all .3s}
+.frow.loaded{border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.04)}
+.frow.loading{border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)}
+.ficon{font-size:13px;flex-shrink:0}
+.fname{font-family:var(--fm);font-size:10px;color:var(--s300)}
+.fmeta{font-family:var(--fm);font-size:8px;color:var(--s400)}
+.fstat2{font-size:12px;flex-shrink:0}
+.fbar{height:2px;background:var(--s700);border-radius:1px;overflow:hidden;margin-top:3px}
+.fbarfill{height:100%;border-radius:1px;background:var(--amber);width:0;transition:width .4s ease}
+.frow.loaded .fbarfill{background:var(--green);width:100%}
+
+/* ── S2 ── */
+.s2b{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.s2b::-webkit-scrollbar{width:4px}
+.s2b::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mcard{background:var(--s900);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;transition:border-color .3s}
+.mcard.running{border-color:rgba(245,158,11,.4);animation:mp 1.5s infinite}
+@keyframes mp{0%,100%{border-color:rgba(245,158,11,.3)}50%{border-color:rgba(245,158,11,.65)}}
+.mcard.done{border-color:rgba(16,185,129,.3)}
+.mhead{padding:13px 15px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:9px}
+.micon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.mia{background:var(--adim);border:1px solid rgba(245,158,11,.2)}
+.mic{background:var(--cdim);border:1px solid rgba(6,182,212,.2)}
+.miv{background:var(--vdim);border:1px solid rgba(139,92,246,.2)}
+.mtitle{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.5px;color:#fff}
+.msub2{font-family:var(--fm);font-size:8px;color:var(--s400);margin-top:1px}
+.mst{margin-left:auto;font-family:var(--fm);font-size:8px;padding:2px 7px;border-radius:3px}
+.stw{background:var(--s800);color:var(--s400);border:1px solid var(--bdr)}
+.str{background:var(--adim);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.std{background:var(--gdim);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.mbody{padding:13px 15px}
+.msteps{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.mstep{font-family:var(--fm);font-size:9px;color:var(--s600);display:flex;align-items:center;gap:5px;transition:color .3s}
+.mstep.ok{color:var(--green)}.mstep.run{color:var(--amber)}
+.mstep.ok::before{content:'✓'}.mstep.run::before{content:'▶'}.mstep:not(.ok):not(.run)::before{content:'○'}
+.mpl{font-family:var(--fm);font-size:8px;color:var(--s400);display:flex;justify-content:space-between;margin-bottom:3px}
+.mprog{height:3px;background:var(--s700);border-radius:2px;overflow:hidden}
+.mprogf{height:100%;border-radius:2px;width:0;transition:width .4s ease}
+.pfa{background:var(--amber)}.pfc{background:var(--cyan)}.pfv{background:var(--violet)}
+.mmet{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:10px}
+.mm{background:var(--s800);border-radius:5px;padding:7px 9px;text-align:center;border:1px solid var(--bdr)}
+.mmv{font-family:var(--fd);font-size:16px;font-weight:700;color:#fff;line-height:1}
+.mml{font-family:var(--fm);font-size:7px;color:var(--s400);margin-top:2px}
+
+/* score table */
+.stw2{background:var(--s900);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;transition:opacity .3s}
+.sth{padding:11px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:9px}
+.sttitle{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.5px;color:#fff}
+.sttag2{font-family:var(--fm);font-size:8px;padding:2px 7px;border-radius:3px;background:rgba(6,182,212,.1);color:var(--cyan);border:1px solid rgba(6,182,212,.2);margin-left:auto}
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--fm);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--s400);padding:9px 13px;text-align:left;border-bottom:1px solid var(--bdr)}
+td{padding:9px 13px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.02)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.sbarw{display:flex;align-items:center;gap:7px}
+.sbar2{flex:1;height:4px;background:var(--s700);border-radius:2px;overflow:hidden;min-width:40px}
+.sbarf{height:100%;border-radius:2px}
+.sfa{background:var(--amber)}.sfc{background:var(--cyan)}.sfv{background:var(--violet)}
+.sval2{font-family:var(--fm);font-size:9px;color:var(--s300);min-width:20px}
+
+/* ── S3 ── */
+.s3b{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.s3b::-webkit-scrollbar{width:4px}
+.s3b::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.sformula{background:var(--s900);border:1px solid var(--bdr);border-radius:10px;padding:14px 18px}
+.sfot{font-family:var(--fd);font-size:16px;font-weight:800;letter-spacing:.5px;color:#fff;margin-bottom:3px}
+.sfos{font-family:var(--fm);font-size:9px;color:var(--s400);margin-bottom:10px}
+.sfeq{background:var(--s800);border-radius:7px;padding:11px 14px;font-family:var(--fm);font-size:10px;color:var(--s300);border:1px solid var(--bdr)}
+.sfeq span{color:var(--amber)}
+
+.nbacard{background:var(--s900);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s}
+.nbacard:hover{border-color:var(--bdrb);transform:translateX(2px)}
+.nbatop{display:flex;align-items:center;padding:12px 16px;gap:12px}
+.nbarank{font-family:var(--fd);font-size:22px;font-weight:800;color:var(--s700);min-width:26px}
+.nbainfo{flex:1}
+.nbaname{font-family:var(--fd);font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
+.nbameta{font-family:var(--fm);font-size:8px;color:var(--s400);display:flex;gap:8px}
+.nbascores{display:flex;gap:8px;margin-right:12px}
+.nsi{text-align:center;min-width:46px}
+.nsiv{font-family:var(--fd);font-size:18px;font-weight:800;line-height:1}
+.nsil{font-family:var(--fm);font-size:7px;color:var(--s400);margin-top:1px}
+.cscore{text-align:center;background:var(--s800);border-radius:7px;padding:8px 13px;border:1px solid var(--bdr);min-width:70px}
+.csv{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--amber);line-height:1}
+.csl{font-family:var(--fm);font-size:7px;color:var(--s400);margin-top:2px}
+.nbaacts{padding:8px 16px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--bdr)}
+.achip{font-family:var(--fm);font-size:8px;padding:3px 9px;border-radius:4px;border:1px solid var(--bdr);color:var(--s300);background:var(--s800)}
+.acf{border-color:rgba(59,130,246,.3);color:#60a5fa;background:rgba(59,130,246,.08)}
+.acv{border-color:rgba(139,92,246,.3);color:#a78bfa;background:var(--vdim)}
+.ace{border-color:rgba(6,182,212,.3);color:var(--cyan);background:var(--cdim)}
+.acm{border-color:rgba(16,185,129,.3);color:var(--green);background:var(--gdim)}
+.acu{border-color:rgba(239,68,68,.3);color:#f87171;background:var(--rdim)}
+
+/* ── S4 ── */
+.s4b{flex:1;overflow-y:auto;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+.s4b::-webkit-scrollbar{width:4px}
+.s4b::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.lqueue{display:flex;flex-direction:column;gap:8px}
+.lqcard{background:var(--s900);border:1px solid var(--bdr);border-radius:9px;overflow:hidden;cursor:pointer;transition:all .2s}
+.lqcard:hover{border-color:var(--bdrb)}
+.lqcard.sel{border-color:rgba(6,182,212,.3);background:rgba(6,182,212,.04)}
+.lqcard.approved{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.04)}
+.lqcard.rejected{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.03);opacity:.65}
+.lqtop{display:flex;align-items:center;padding:11px 14px;gap:10px}
+.lqname{font-family:var(--fd);font-size:14px;font-weight:700;color:#fff;flex:1}
+.lqb{font-family:var(--fm);font-size:8px;padding:2px 7px;border-radius:3px}
+.lbp{background:var(--adim);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.lba{background:var(--gdim);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.lbr{background:var(--rdim);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.lqnba{font-family:var(--fm);font-size:9px;color:var(--s400);padding:0 14px 10px;line-height:1.5}
+
+.lpanel{background:var(--s900);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;position:sticky;top:0;max-height:calc(100vh - 230px)}
+.lph2{padding:12px 16px;border-bottom:1px solid var(--bdr)}
+.lpht{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.5px;color:#fff;margin-bottom:1px}
+.lphs{font-family:var(--fm);font-size:8px;color:var(--s400)}
+.lpbody{flex:1;overflow-y:auto;padding:14px}
+.lpbody::-webkit-scrollbar{width:3px}
+.lpbody::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.lps{margin-bottom:12px}
+.lpst{font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--s400);margin-bottom:6px}
+.lpsc{background:var(--s800);border-radius:7px;padding:10px 12px;font-size:11px;color:var(--s300);line-height:1.6;border:1px solid var(--bdr)}
+.lchk{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.ci{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;color:var(--s400)}
+.ci.pass{color:var(--green)}.ci.pass::before{content:'✓';font-size:11px}
+.ci:not(.pass)::before{content:'○'}
+.lpact{padding:12px 14px;border-top:1px solid var(--bdr);display:flex;gap:7px;flex-shrink:0}
+.appbtn{flex:1;background:var(--green);color:#000;border:none;border-radius:6px;padding:9px;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.appbtn:hover{background:#34d399}
+.rejbtn{flex:1;background:var(--rdim);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:9px;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.rejbtn:hover{background:rgba(239,68,68,.2)}
+.aabtn{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.5px;padding:8px 18px;border-radius:6px;border:1px solid rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:var(--green);cursor:pointer;transition:all .2s}
+.aabtn:hover{background:rgba(16,185,129,.18)}
+
+/* ── S5 ── */
+.s5b{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.s5b::-webkit-scrollbar{width:4px}
+.s5b::-webkit-scrollbar-thumb{background:var(--s700);border-radius:2px}
+.vheader{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(6,182,212,.06));border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:18px}
+.vhi{font-size:32px}
+.vht{flex:1}
+.vhtt{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:1px;color:#fff;margin-bottom:3px}
+.vhts{font-family:var(--fm);font-size:9px;color:var(--s400)}
+.vhstats{display:flex;gap:14px}
+.vhs{text-align:center}
+.vhsn{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--green);line-height:1}
+.vhsl{font-family:var(--fm);font-size:8px;color:var(--s400);margin-top:1px}
+
+.vccard{background:var(--s900);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;animation:cslide .4s ease both}
+@keyframes cslide{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+.vctop{padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bdr)}
+.vcrank{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--s700);min-width:24px}
+.vcinfo{flex:1}
+.vcname{font-family:var(--fd);font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
+.vcmeta{font-family:var(--fm);font-size:8px;color:var(--s400);display:flex;gap:7px}
+.vcscore{text-align:center;background:var(--s800);border-radius:7px;padding:7px 12px;border:1px solid var(--bdr)}
+.vcscoren{font-family:var(--fd);font-size:22px;font-weight:800;color:var(--green);line-height:1}
+.vcscorel{font-family:var(--fm);font-size:7px;color:var(--s400);margin-top:1px}
+.vcps{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:9px;color:var(--green)}
+.vcnba{background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(6,182,212,.04));border:1px solid rgba(245,158,11,.15);border-radius:7px;padding:11px 14px;margin:10px 16px 0}
+.vcnbal{font-family:var(--fm);font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.vcnbat{font-size:11px;color:var(--s100);line-height:1.6}
+.vcbody{padding:10px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vcf{display:flex;flex-direction:column;gap:2px}
+.vcfl{font-family:var(--fm);font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--s400)}
+.vcfv{font-size:11px;color:var(--s300);line-height:1.5}
+.vctags{padding:0 16px 12px;display:flex;gap:5px;flex-wrap:wrap}
+.vtag{font-family:var(--fm);font-size:8px;padding:2px 8px;border-radius:3px;border:1px solid var(--bdr);color:var(--s400);background:var(--s800)}
+
+.vsync{display:flex;align-items:center;justify-content:center;gap:7px;padding:20px;font-family:var(--fm);font-size:11px;color:var(--s400)}
+.vspin{width:14px;height:14px;border:2px solid rgba(16,185,129,.2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emptyp{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--s600);gap:7px;font-family:var(--fm);font-size:10px;text-align:center;padding:20px}
+.emptyp .ei{font-size:28px;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tlogo"><div class="ticon">⚡</div>NBA DECISION ENGINE</div>
+  <div class="tsep"></div>
+  <div class="tprod">NOVARTIS ONCOLOGY · KISQALI · COMMERCIAL INTELLIGENCE PLATFORM</div>
+  <div class="tsep2"></div>
+  <div class="tstatus"><div class="sdot" id="liveDot"></div><span id="liveLabel">READY</span></div>
+</div>
+
+<div class="pipeline">
+  <div class="stage active" id="st1" onclick="goStage(1)"><div class="stage-num" id="sn1">1</div><div><div class="stage-label">DATA INGESTION</div><div class="stage-sub">6 sources · flat files</div></div></div>
+  <div class="parrow">›</div>
+  <div class="stage locked" id="st2" onclick="goStage(2)"><div class="stage-num" id="sn2">2</div><div><div class="stage-label">MODEL EXECUTION</div><div class="stage-sub">Rx · Affinity · Propensity</div></div></div>
+  <div class="parrow">›</div>
+  <div class="stage locked" id="st3" onclick="goStage(3)"><div class="stage-num" id="sn3">3</div><div><div class="stage-label">SCORE SYNC</div><div class="stage-sub">Ensemble · NBA ranking</div></div></div>
+  <div class="parrow">›</div>
+  <div class="stage locked" id="st4" onclick="goStage(4)"><div class="stage-num" id="sn4">4</div><div><div class="stage-label">LEGAL / MLR</div><div class="stage-sub">Content approval gate</div></div></div>
+  <div class="parrow">›</div>
+  <div class="stage locked" id="st5" onclick="goStage(5)"><div class="stage-num" id="sn5">5</div><div><div class="stage-label">VEEVA CRM PUSH</div><div class="stage-sub">Rep tasks · sync</div></div></div>
+</div>
+
+<div class="main">
+
+  <!-- S1 -->
+  <div class="screen active" id="scr1">
+    <div class="s1b">
+      <div class="sgrp"><div class="sgh"><span class="sgicon">💊</span><span class="sgtitle">Rx / Claims Data</span><span class="sgbadge ext">EXTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f1"><span class="ficon">📄</span><div style="flex:1"><div class="fname">IQVIA_claims_Q4_2024.csv</div><div class="fmeta">HCP Rx volume · 18,420 rows</div><div class="fbar"><div class="fbarfill" id="fb1"></div></div></div><span class="fstat2" id="fs1">⏳</span></div>
+          <div class="frow" id="f2"><span class="ficon">📄</span><div style="flex:1"><div class="fname">Symphony_NRx_TRx_Dec2024.csv</div><div class="fmeta">Brand vs competitor Rx · 12,850 rows</div><div class="fbar"><div class="fbarfill" id="fb2"></div></div></div><span class="fstat2" id="fs2">⏳</span></div>
+          <div class="frow" id="f3"><span class="ficon">📄</span><div style="flex:1"><div class="fname">IQVIA_decile_rankings_2024.csv</div><div class="fmeta">Rx decile 1–10 · 9,210 HCPs</div><div class="fbar"><div class="fbarfill" id="fb3"></div></div></div><span class="fstat2" id="fs3">⏳</span></div>
+        </div>
+      </div>
+      <div class="sgrp"><div class="sgh"><span class="sgicon">🏥</span><span class="sgtitle">Specialty Pharmacy</span><span class="sgbadge ext">EXTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f4"><span class="ficon">📄</span><div style="flex:1"><div class="fname">SPP_patient_starts_Q4.csv</div><div class="fmeta">New patient starts · 6,140 rows</div><div class="fbar"><div class="fbarfill" id="fb4"></div></div></div><span class="fstat2" id="fs4">⏳</span></div>
+          <div class="frow" id="f5"><span class="ficon">📄</span><div style="flex:1"><div class="fname">SPP_adherence_refills_2024.csv</div><div class="fmeta">Adherence & persistence · 5,890 rows</div><div class="fbar"><div class="fbarfill" id="fb5"></div></div></div><span class="fstat2" id="fs5">⏳</span></div>
+        </div>
+      </div>
+      <div class="sgrp"><div class="sgh"><span class="sgicon">📋</span><span class="sgtitle">EMR / EHR Signals</span><span class="sgbadge ext">EXTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f6"><span class="ficon">📄</span><div style="flex:1"><div class="fname">Flatiron_HR_HER2_cohort.csv</div><div class="fmeta">HR+/HER2− patient panel · 21,300 rows</div><div class="fbar"><div class="fbarfill" id="fb6"></div></div></div><span class="fstat2" id="fs6">⏳</span></div>
+          <div class="frow" id="f7"><span class="ficon">📄</span><div style="flex:1"><div class="fname">Epic_diagnosis_flags_Q4.csv</div><div class="fmeta">EMR diagnostic signals · 14,200 rows</div><div class="fbar"><div class="fbarfill" id="fb7"></div></div></div><span class="fstat2" id="fs7">⏳</span></div>
+        </div>
+      </div>
+      <div class="sgrp"><div class="sgh"><span class="sgicon">🎤</span><span class="sgtitle">Congress / KOL Activity</span><span class="sgbadge ext">EXTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f8"><span class="ficon">📄</span><div style="flex:1"><div class="fname">ASCO2024_attendee_speakers.csv</div><div class="fmeta">Speakers, abstracts · 3,420 rows</div><div class="fbar"><div class="fbarfill" id="fb8"></div></div></div><span class="fstat2" id="fs8">⏳</span></div>
+          <div class="frow" id="f9"><span class="ficon">📄</span><div style="flex:1"><div class="fname">ESMO2024_KOL_activity.csv</div><div class="fmeta">KOL engagement scores · 2,180 rows</div><div class="fbar"><div class="fbarfill" id="fb9"></div></div></div><span class="fstat2" id="fs9">⏳</span></div>
+        </div>
+      </div>
+      <div class="sgrp"><div class="sgh"><span class="sgicon">📞</span><span class="sgtitle">Internal CRM — Call History</span><span class="sgbadge int">INTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f10"><span class="ficon">📄</span><div style="flex:1"><div class="fname">Veeva_call_log_2024.csv</div><div class="fmeta">Rep interactions · 48,200 records</div><div class="fbar"><div class="fbarfill" id="fb10"></div></div></div><span class="fstat2" id="fs10">⏳</span></div>
+          <div class="frow" id="f11"><span class="ficon">📄</span><div style="flex:1"><div class="fname">sample_drop_history_2024.csv</div><div class="fmeta">Sample requests · 22,400 rows</div><div class="fbar"><div class="fbarfill" id="fb11"></div></div></div><span class="fstat2" id="fs11">⏳</span></div>
+          <div class="frow" id="f12"><span class="ficon">📄</span><div style="flex:1"><div class="fname">rep_territory_alignment_2024.csv</div><div class="fmeta">Rep-HCP alignment · 1,840 reps</div><div class="fbar"><div class="fbarfill" id="fb12"></div></div></div><span class="fstat2" id="fs12">⏳</span></div>
+        </div>
+      </div>
+      <div class="sgrp"><div class="sgh"><span class="sgicon">📄</span><span class="sgtitle">Managed Care / Formulary</span><span class="sgbadge int">INTERNAL</span></div>
+        <div class="sgfiles">
+          <div class="frow" id="f13"><span class="ficon">📄</span><div style="flex:1"><div class="fname">formulary_coverage_matrix_Q1.csv</div><div class="fmeta">Plan coverage × HCP · 9,600 rows</div><div class="fbar"><div class="fbarfill" id="fb13"></div></div></div><span class="fstat2" id="fs13">⏳</span></div>
+          <div class="frow" id="f14"><span class="ficon">📄</span><div style="flex:1"><div class="fname">PA_approval_rates_by_plan.csv</div><div class="fmeta">Prior auth rates · 880 plans</div><div class="fbar"><div class="fbarfill" id="fb14"></div></div></div><span class="fstat2" id="fs14">⏳</span></div>
+          <div class="frow" id="f15"><span class="ficon">📄</span><div style="flex:1"><div class="fname">rebate_contract_status_2025.csv</div><div class="fmeta">Formulary tier changes · active contracts</div><div class="fbar"><div class="fbarfill" id="fb15"></div></div></div><span class="fstat2" id="fs15">⏳</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="fstat">Sources: <span id="loadedCount">0</span>/15 files · <span id="rowCount">0</span> records ingested</div>
+      <div class="fbtnrow">
+        <button class="nbtn ba" id="ingestBtn" onclick="startIngestion()">▶ INGEST ALL SOURCES</button>
+        <button class="nbtn ba" id="toModels" onclick="goStage(2)" style="display:none">→ RUN MODELS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="screen" id="scr2">
+    <div class="s2b">
+      <div class="mgrid">
+        <div class="mcard" id="mc-rx">
+          <div class="mhead"><div class="micon mia">💊</div><div><div class="mtitle">RX MODEL</div><div class="msub2">IQVIA · SYMPHONY · SPP</div></div><span class="mst stw" id="rx-st">WAITING</span></div>
+          <div class="mbody">
+            <div class="msteps">
+              <div class="mstep" id="rx1">Load claims & Rx volume data</div>
+              <div class="mstep" id="rx2">Normalize TRx / NRx by specialty</div>
+              <div class="mstep" id="rx3">Calculate brand vs. competitor share</div>
+              <div class="mstep" id="rx4">Assign Rx decile rankings (1–10)</div>
+              <div class="mstep" id="rx5">Score HCP Rx potential (0–100)</div>
+            </div>
+            <div class="mpl"><span>Rx Model</span><span id="rx-pct">0%</span></div>
+            <div class="mprog"><div class="mprogf pfa" id="rx-bar"></div></div>
+            <div class="mmet" id="rx-met" style="opacity:.25">
+              <div class="mm"><div class="mmv" style="color:var(--amber)">9,218</div><div class="mml">HCPs Scored</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--amber)">D8.4</div><div class="mml">Avg Decile</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--amber)">72.3</div><div class="mml">Avg Score</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mcard" id="mc-aff">
+          <div class="mhead"><div class="micon mic">🤝</div><div><div class="mtitle">REP AFFINITY MODEL</div><div class="msub2">VEEVA CRM · CALL HISTORY</div></div><span class="mst stw" id="aff-st">WAITING</span></div>
+          <div class="mbody">
+            <div class="msteps">
+              <div class="mstep" id="aff1">Load CRM call records & samples</div>
+              <div class="mstep" id="aff2">Calculate call frequency & recency</div>
+              <div class="mstep" id="aff3">Analyze rep conversion rates</div>
+              <div class="mstep" id="aff4">Model rep-HCP relationship strength</div>
+              <div class="mstep" id="aff5">Score rep affinity index (0–100)</div>
+            </div>
+            <div class="mpl"><span>Affinity Model</span><span id="aff-pct">0%</span></div>
+            <div class="mprog"><div class="mprogf pfc" id="aff-bar"></div></div>
+            <div class="mmet" id="aff-met" style="opacity:.25">
+              <div class="mm"><div class="mmv" style="color:var(--cyan)">9,218</div><div class="mml">Pairs Scored</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--cyan)">68.7</div><div class="mml">Avg Affinity</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--cyan)">84%</div><div class="mml">Coverage</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mcard" id="mc-prop">
+          <div class="mhead"><div class="micon miv">🎯</div><div><div class="mtitle">PROPENSITY MODEL</div><div class="msub2">EMR · CONGRESS · FORMULARY</div></div><span class="mst stw" id="prop-st">WAITING</span></div>
+          <div class="mbody">
+            <div class="msteps">
+              <div class="mstep" id="prop1">Ingest EMR diagnostic signals</div>
+              <div class="mstep" id="prop2">Map formulary access per HCP</div>
+              <div class="mstep" id="prop3">Identify KOL / congress signals</div>
+              <div class="mstep" id="prop4">Apply gradient boosting classifier</div>
+              <div class="mstep" id="prop5">Output Rx propensity score (0–100)</div>
+            </div>
+            <div class="mpl"><span>Propensity Model</span><span id="prop-pct">0%</span></div>
+            <div class="mprog"><div class="mprogf pfv" id="prop-bar"></div></div>
+            <div class="mmet" id="prop-met" style="opacity:.25">
+              <div class="mm"><div class="mmv" style="color:var(--violet)">9,218</div><div class="mml">HCPs Scored</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--violet)">0.71</div><div class="mml">AUC-ROC</div></div>
+              <div class="mm"><div class="mmv" style="color:var(--violet)">74.1</div><div class="mml">Avg Score</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="stw2" id="scoreTable" style="opacity:.25">
+        <div class="sth"><span class="sttitle">LIVE MODEL OUTPUT — TOP 8 HCPs</span><span class="sttag2" id="stag">PENDING</span></div>
+        <table><thead><tr><th>HCP</th><th>Specialty</th><th>Territory</th><th>Rx Score</th><th>Affinity Score</th><th>Propensity Score</th></tr></thead>
+        <tbody id="ptbody"></tbody></table>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="fstat">Models: <span id="mready">0</span>/3 complete · <span id="hscored">0</span> HCPs scored</div>
+      <div class="fbtnrow">
+        <button class="nbtn ba" id="runBtn" onclick="runModels()">▶ RUN ALL MODELS</button>
+        <button class="nbtn bc" id="toSync" onclick="goStage(3)" style="display:none">→ SYNC SCORES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="screen" id="scr3">
+    <div class="s3b">
+      <div class="sformula">
+        <div class="sfot">ENSEMBLE SCORE SYNCHRONIZATION</div>
+        <div class="sfos">COMBINING ALL THREE MODEL OUTPUTS INTO A SINGLE COMPOSITE NBA SCORE</div>
+        <div class="sfeq">Composite NBA Score = <span>Rx Score</span> × 0.40 + <span>Propensity Score</span> × 0.35 + <span>Rep Affinity</span> × 0.25 · Tier override applied for active urgent signals</div>
+      </div>
+      <div id="nbaGrid"></div>
+    </div>
+    <div class="footer">
+      <div class="fstat">Composite scores: <span id="syncCount">0</span> HCPs ranked · <span id="t1c">0</span> Priority 1 NBAs ready</div>
+      <button class="nbtn bg" onclick="goStage(4)">→ SUBMIT FOR LEGAL / MLR REVIEW</button>
+    </div>
+  </div>
+
+  <!-- S4 -->
+  <div class="screen" id="scr4">
+    <div class="s4b">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div><div style="font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff">MLR / LEGAL REVIEW QUEUE</div>
+          <div style="font-family:var(--fm);font-size:8px;color:var(--s400);margin-top:2px">REVIEW NBA CONTENT · APPROVE OR REJECT BEFORE VEEVA PUSH</div></div>
+          <button class="aabtn" onclick="approveAll()">✓ APPROVE ALL</button>
+        </div>
+        <div class="lqueue" id="lqueue"></div>
+      </div>
+      <div class="lpanel">
+        <div class="lph2"><div class="lpht">MLR REVIEW PANEL</div><div class="lphs">Select an HCP to review content</div></div>
+        <div class="lpbody" id="lpbody"><div class="emptyp"><div class="ei">📋</div>Select an HCP from the queue</div></div>
+        <div class="lpact" id="lpact" style="display:none">
+          <button class="appbtn" onclick="approveHCP()">✓ APPROVE</button>
+          <button class="rejbtn" onclick="rejectHCP()">✗ REJECT</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="fstat">Review: <span id="appc">0</span> approved · <span id="rejc">0</span> rejected · <span id="pendc">8</span> pending</div>
+      <button class="nbtn bv" id="toVeeva" onclick="goStage(5)" style="display:none">→ PUSH TO VEEVA CRM</button>
+    </div>
+  </div>
+
+  <!-- S5 -->
+  <div class="screen" id="scr5">
+    <div class="s5b">
+      <div class="vheader">
+        <div class="vhi">☁️</div>
+        <div class="vht">
+          <div class="vhtt">VEEVA CRM — NBA PUSH COMPLETE</div>
+          <div class="vhts">APPROVED NBA SUGGESTIONS LIVE IN REP TASK QUEUES · <span id="pushTime"></span></div>
+        </div>
+        <div class="vhstats">
+          <div class="vhs"><div class="vhsn" id="vPushed">0</div><div class="vhsl">Records Pushed</div></div>
+          <div class="vhs"><div class="vhsn" id="vReps">0</div><div class="vhsl">Reps Notified</div></div>
+          <div class="vhs"><div class="vhsn" id="vTerr">0</div><div class="vhsl">Territories</div></div>
+        </div>
+      </div>
+      <div id="vgrid"></div>
+    </div>
+    <div class="footer">
+      <div class="fstat" style="color:var(--green)">✓ Pipeline complete · All approved NBAs live in Veeva · Reps notified via push notification</div>
+      <button class="nbtn ba" onclick="location.reload()">↺ NEW CYCLE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HCP=[
+  {id:1,name:'Dr. Elena Vasquez',spec:'Medical Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'1234567890',tier:1,rx:88,aff:82,prop:91,sig:'HIGH_NPS_SPIKE',ch:'Field Visit',urg:'High',comp:28,brx:42,form:'Preferred',kol:true,
+   nba:'Immediate field visit — new patient start spike (+35% MoM). Lead with MONALEESA-7 OS data for pre-menopausal patients. Offer Kisqali Connect hub setup for growing patient panel. Set up MSL engagement.'},
+  {id:2,name:'Dr. James Okafor',spec:'Hematology/Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'2345678901',tier:1,rx:76,aff:71,prop:83,sig:'FORMULARY_WIN',ch:'Field Visit',urg:'High',comp:55,brx:28,form:'Preferred',kol:false,
+   nba:'Announce BlueCross/Aetna formulary win. Convert 55 competitor scripts with new access parity. Present MONALEESA-2 OS update (63.9m vs 51.4m). Introduce Kisqali Connect PA support.'},
+  {id:3,name:'Dr. Robert Simmons',spec:'Medical Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'3456789012',tier:1,rx:92,aff:88,prop:89,sig:'CONGRESS_ACTIVITY',ch:'Field Visit',urg:'High',comp:35,brx:55,form:'Preferred',kol:true,
+   nba:'Post-ESMO KOL engagement. Share MONALEESA-3 long-term OS in 65+ patients. Propose MSL scientific exchange. Explore speaker bureau participation. Decile 10 — strategic priority.'},
+  {id:4,name:'Dr. Aisha Patel',spec:'Medical Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'4567890123',tier:1,rx:85,aff:90,prop:87,sig:'HIGH_NPS_SPIKE',ch:'Field Visit',urg:'High',comp:22,brx:50,form:'Preferred',kol:true,
+   nba:'2nd consecutive NPS spike (+40% MoM). Brand champion visit — confirm MSL deep-dive. Initiate speaker bureau program overview. Reinforce Kisqali Connect pipeline for growing patient panel.'},
+  {id:5,name:'Dr. Thomas Briggs',spec:'Hematology/Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'5678901234',tier:2,rx:63,aff:58,prop:61,sig:'FORMULARY_LOSS',ch:'Field Visit',urg:'Critical',comp:70,brx:14,form:'Non-Preferred',kol:false,
+   nba:'URGENT: Formulary loss at BlueCross PPO. Enroll affected patients in 90-day bridge program. Submit PA appeals (75% approval rate). Present clinical rationale to prevent competitor switching.'},
+  {id:6,name:'Dr. Angela Huang',spec:'Gynecologic Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'6789012345',tier:2,rx:79,aff:74,prop:76,sig:null,ch:'Field Visit',urg:'Medium',comp:48,brx:33,form:'Preferred',kol:false,
+   nba:'New practice group transition. Set up Kisqali Connect hub before workflows lock in. OS differentiation vs. competitor (48 scripts). Explore expanded patient eligibility in gynecologic oncology.'},
+  {id:7,name:'Dr. Sandra Kim',spec:'Breast Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'7890123456',tier:2,rx:61,aff:55,prop:63,sig:null,ch:'Virtual Call',urg:'Medium',comp:30,brx:12,form:'Preferred',kol:false,
+   nba:'Re-engage after 60-day gap. Address QT monitoring concern with simplified protocol card. Share 5-year long-term safety data. Propose trial Kisqali start for next eligible pre-menopausal patient.'},
+  {id:8,name:'Dr. Priya Nair',spec:'Medical Oncology',terr:'Northeast',rep:'Alex Johnson',npi:'8901234567',tier:3,rx:38,aff:32,prop:41,sig:null,ch:'Virtual / Email',urg:'Low',comp:30,brx:4,form:'Non-Formulary',kol:false,
+   nba:'Maintenance touchpoint after 90-day gap. Check formulary status changes. Share patient assistance program eligibility. Brief call — keep under 10 minutes. Email formulary update one-pager.'},
+];
+
+const cs=h=>Math.round(h.rx*0.4+h.prop*0.35+h.aff*0.25);
+const uc={Critical:'var(--red)',High:'var(--amber)',Medium:'var(--cyan)',Low:'var(--green)'};
+const ci={'Field Visit':'🚗','Virtual Call':'💻','Virtual / Email':'📧'};
+const mlrChecks=['No off-label promotion claims','Approved messaging only (MLR ref. 2024-K-0182)','Fair balance language included','ISI reference available','No competitor disparagement','Data citations verified (MONALEESA-2/3/7)'];
+
+let stDone={1:false,2:false,3:false,4:false,5:false};
+let curStage=1;
+const lstat={};
+HCP.forEach(h=>lstat[h.id]='pending');
+let selLegal=null;
+
+function goStage(n){
+  if(n>1&&!stDone[n-1]&&n!==curStage) return;
+  curStage=n;
+  document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('active',i===n-1));
+  document.querySelectorAll('.stage').forEach((s,i)=>{
+    const sn=i+1;
+    s.className='stage';
+    if(sn===n) s.classList.add('active');
+    else if(stDone[sn]) s.classList.add('done');
+    else s.classList.add('locked');
+  });
+  if(n===3&&!stDone[3]){stDone[3]=true;buildNBAGrid();}
+  if(n===4){buildLegalQueue();}
+  if(n===5){buildVeeva();}
+}
+
+// S1
+let lfc=0,tr=0;
+const fm=[18420,12850,9210,6140,5890,21300,14200,3420,2180,48200,22400,1840,9600,880,440];
+async function startIngestion(){
+  document.getElementById('ingestBtn').disabled=true;
+  document.getElementById('ingestBtn').textContent='⟳ INGESTING...';
+  document.getElementById('liveDot').className='sdot live';
+  document.getElementById('liveLabel').textContent='INGESTING';
+  for(let i=1;i<=15;i++){
+    document.getElementById('f'+i).classList.add('loading');
+    document.getElementById('fs'+i).textContent='⟳';
+    let p=0;const bar=document.getElementById('fb'+i);
+    while(p<100){p+=Math.random()*30+8;if(p>100)p=100;bar.style.width=p+'%';await sleep(60);}
+    document.getElementById('f'+i).classList.remove('loading');
+    document.getElementById('f'+i).classList.add('loaded');
+    document.getElementById('fs'+i).textContent='✓';
+    lfc++;tr+=fm[i-1];
+    document.getElementById('loadedCount').textContent=lfc;
+    document.getElementById('rowCount').textContent=tr.toLocaleString();
+    await sleep(90);
+  }
+  stDone[1]=true;
+  document.getElementById('ingestBtn').style.display='none';
+  document.getElementById('toModels').style.display='flex';
+  document.getElementById('liveLabel').textContent='INGESTION COMPLETE';
+}
+
+// S2
+let mr=0;
+async function runModels(){
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('runBtn').textContent='⟳ RUNNING...';
+  document.getElementById('liveLabel').textContent='MODELS RUNNING';
+  await Promise.all([
+    runM('rx',['rx1','rx2','rx3','rx4','rx5'],'rx-bar','rx-pct','rx-st','mc-rx','rx-met',0),
+    runM('aff',['aff1','aff2','aff3','aff4','aff5'],'aff-bar','aff-pct','aff-st','mc-aff','aff-met',600),
+    runM('prop',['prop1','prop2','prop3','prop4','prop5'],'prop-bar','prop-pct','prop-st','mc-prop','prop-met',1100),
+  ]);
+  buildPT();stDone[2]=true;
+  document.getElementById('runBtn').style.display='none';
+  document.getElementById('toSync').style.display='flex';
+  document.getElementById('liveLabel').textContent='MODELS COMPLETE';
+}
+async function runM(pfx,steps,bid,pid,sid,cid,mid,delay){
+  await sleep(delay);
+  document.getElementById(sid).textContent='RUNNING';document.getElementById(sid).className='mst str';
+  document.getElementById(cid).classList.add('running');
+  for(let i=0;i<steps.length;i++){
+    document.getElementById(steps[i]).classList.add('run');
+    let p=(i+1)/steps.length*100;
+    document.getElementById(bid).style.width=p+'%';
+    document.getElementById(pid).textContent=Math.round(p)+'%';
+    await sleep(480+Math.random()*280);
+    document.getElementById(steps[i]).classList.remove('run');
+    document.getElementById(steps[i]).classList.add('ok');
+    document.getElementById('hscored').textContent='9,218';
+  }
+  document.getElementById(cid).classList.remove('running');document.getElementById(cid).classList.add('done');
+  document.getElementById(sid).textContent='COMPLETE';document.getElementById(sid).className='mst std';
+  document.getElementById(mid).style.opacity='1';
+  mr++;document.getElementById('mready').textContent=mr;
+}
+function buildPT(){
+  const t=document.getElementById('scoreTable');t.style.opacity='1';
+  document.getElementById('stag').textContent='LIVE OUTPUT';
+  document.getElementById('ptbody').innerHTML=HCP.map(h=>`
+    <tr><td style="font-weight:600;color:#fff">${h.name}</td><td style="color:var(--s400);font-size:10px">${h.spec}</td><td style="color:var(--s400);font-size:10px">${h.terr}</td>
+    <td><div class="sbarw"><div class="sbar2"><div class="sbarf sfa" style="width:${h.rx}%"></div></div><span class="sval2">${h.rx}</span></div></td>
+    <td><div class="sbarw"><div class="sbar2"><div class="sbarf sfc" style="width:${h.aff}%"></div></div><span class="sval2">${h.aff}</span></div></td>
+    <td><div class="sbarw"><div class="sbar2"><div class="sbarf sfv" style="width:${h.prop}%"></div></div><span class="sval2">${h.prop}</span></div></td></tr>`).join('');
+}
+
+// S3
+function buildNBAGrid(){
+  const sorted=[...HCP].sort((a,b)=>cs(b)-cs(a));
+  document.getElementById('syncCount').textContent=sorted.length;
+  document.getElementById('t1c').textContent=sorted.filter(h=>h.tier===1).length;
+  document.getElementById('nbaGrid').innerHTML=sorted.map((h,i)=>{
+    const chips=[
+      `<span class="achip ${h.ch==='Field Visit'?'acf':h.ch==='Virtual Call'?'acv':'ace'}">${ci[h.ch]||'📧'} ${h.ch}</span>`,
+      `<span class="achip" style="color:${uc[h.urg]};border-color:${uc[h.urg]}33;background:${uc[h.urg]}11">${h.urg} Priority</span>`,
+      h.sig?`<span class="achip acu">⚡ ${h.sig.replace(/_/g,' ')}</span>`:'',
+      h.kol?'<span class="achip acm">🎤 KOL</span>':'',
+      h.form==='Preferred'?'<span class="achip acm">✓ Preferred</span>':'',
+    ].join('');
+    return `<div class="nbacard" onclick="this.style.borderColor=this.style.borderColor?'':'var(--amber)'">
+      <div class="nbatop">
+        <div class="nbarank">${(i+1).toString().padStart(2,'0')}</div>
+        <div class="nbainfo"><div class="nbaname">${h.name}</div><div class="nbameta"><span>${h.spec}</span><span>·</span><span>${h.terr}</span><span>·</span><span>${h.rep}</span></div></div>
+        <div class="nbascores">
+          <div class="nsi"><div class="nsiv" style="color:var(--amber)">${h.rx}</div><div class="nsil">Rx</div></div>
+          <div class="nsi"><div class="nsiv" style="color:var(--cyan)">${h.aff}</div><div class="nsil">Affinity</div></div>
+          <div class="nsi"><div class="nsiv" style="color:var(--violet)">${h.prop}</div><div class="nsil">Propensity</div></div>
+        </div>
+        <div class="cscore"><div class="csv">${cs(h)}</div><div class="csl">COMPOSITE</div></div>
+      </div>
+      <div class="nbaacts">${chips}</div>
+    </div>`;
+  }).join('');
+}
+
+// S4
+function buildLegalQueue(){
+  updateLF();
+  document.getElementById('lqueue').innerHTML=HCP.map(h=>`
+    <div class="lqcard" id="lq-${h.id}" onclick="selL(${h.id})">
+      <div class="lqtop">
+        <div><div class="lqname">${h.name}</div>
+        <div style="font-family:var(--fm);font-size:8px;color:var(--s400)">${h.spec} · ${h.ch} · <span style="color:${uc[h.urg]}">${h.urg} Priority</span> · Composite: <span style="color:var(--amber)">${cs(h)}</span></div></div>
+        <span class="lqb lbp" id="lqb-${h.id}">PENDING</span>
+      </div>
+      <div class="lqnba">${h.nba.substring(0,110)}...</div>
+    </div>`).join('');
+}
+function selL(id){
+  selLegal=HCP.find(h=>h.id===id);
+  document.querySelectorAll('.lqcard').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('lq-'+id).classList.add('sel');
+  document.getElementById('lpact').style.display='flex';
+  const s=lstat[id];
+  const chks=mlrChecks.map(c=>`<div class="ci pass">${c}</div>`).join('');
+  document.getElementById('lpbody').innerHTML=`
+    <div class="lps"><div class="lpst">HCP & Context</div><div class="lpsc"><strong style="color:#fff">${selLegal.name}</strong> · ${selLegal.spec}<br>${selLegal.terr} · Rep: ${selLegal.rep}<br>Composite: <strong style="color:var(--amber)">${cs(selLegal)}</strong> · ${selLegal.ch} · ${selLegal.urg} Priority</div></div>
+    <div class="lps"><div class="lpst">NBA Action Content</div><div class="lpsc">${selLegal.nba}</div></div>
+    <div class="lps"><div class="lpst">MLR Compliance Checks</div><div class="lchk">${chks}</div></div>
+    <div class="lps"><div class="lpst">Current Status</div><div class="lpsc" style="color:${s==='approved'?'var(--green)':s==='rejected'?'var(--red)':'var(--amber)'}">${s.toUpperCase()}</div></div>`;
+}
+function approveHCP(){if(!selLegal)return;lstat[selLegal.id]='approved';upLC(selLegal.id,'approved');updateLF();checkLegal();}
+function rejectHCP(){if(!selLegal)return;lstat[selLegal.id]='rejected';upLC(selLegal.id,'rejected');updateLF();}
+function approveAll(){HCP.forEach(h=>{lstat[h.id]='approved';upLC(h.id,'approved');});updateLF();checkLegal();}
+function upLC(id,s){
+  document.getElementById('lq-'+id).className='lqcard '+(s==='approved'?'approved':'rejected');
+  const b=document.getElementById('lqb-'+id);b.className='lqb '+(s==='approved'?'lba':'lbr');b.textContent=s.toUpperCase();
+}
+function updateLF(){
+  document.getElementById('appc').textContent=Object.values(lstat).filter(v=>v==='approved').length;
+  document.getElementById('rejc').textContent=Object.values(lstat).filter(v=>v==='rejected').length;
+  document.getElementById('pendc').textContent=Object.values(lstat).filter(v=>v==='pending').length;
+}
+function checkLegal(){
+  const app=Object.values(lstat).filter(v=>v==='approved').length;
+  if(app>=4){stDone[4]=true;document.getElementById('toVeeva').style.display='flex';}
+}
+
+// S5
+async function buildVeeva(){
+  const approved=HCP.filter(h=>lstat[h.id]==='approved').sort((a,b)=>cs(b)-cs(a));
+  document.getElementById('pushTime').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('vPushed').textContent=approved.length;
+  document.getElementById('vReps').textContent=1;
+  document.getElementById('vTerr').textContent=1;
+  document.getElementById('liveDot').className='sdot live';
+  document.getElementById('liveLabel').textContent='VEEVA SYNC COMPLETE';
+  const grid=document.getElementById('vgrid');
+  grid.innerHTML='<div class="vsync"><div class="vspin"></div>Pushing records to Veeva CRM...</div>';
+  await sleep(1600);
+  grid.innerHTML=approved.map((h,i)=>`
+    <div class="vccard" style="animation-delay:${i*.07}s;margin-bottom:12px">
+      <div class="vctop">
+        <div class="vcrank">${(i+1).toString().padStart(2,'0')}</div>
+        <div class="vcinfo"><div class="vcname">${h.name}</div><div class="vcmeta"><span>${h.spec}</span><span>·</span><span>${h.terr}</span><span>·</span><span>NPI: ${h.npi}</span></div></div>
+        <div class="vcscore"><div class="vcscoren">${cs(h)}</div><div class="vcscorel">NBA SCORE</div></div>
+        <div class="vcps">✓ PUSHED TO VEEVA</div>
+      </div>
+      <div class="vcnba"><div class="vcnbal">▸ NEXT BEST ACTION — REP TASK IN VEEVA</div><div class="vcnbat">${h.nba}</div></div>
+      <div class="vcbody">
+        <div class="vcf"><div class="vcfl">Recommended Channel</div><div class="vcfv">${ci[h.ch]||'📧'} ${h.ch}</div></div>
+        <div class="vcf"><div class="vcfl">Priority</div><div class="vcfv" style="color:${uc[h.urg]}">${h.urg}</div></div>
+        <div class="vcf"><div class="vcfl">Assigned Rep</div><div class="vcfv">${h.rep}</div></div>
+        <div class="vcf"><div class="vcfl">Territory</div><div class="vcfv">${h.terr}</div></div>
+        <div class="vcf"><div class="vcfl">Model Scores (Rx / Affinity / Propensity)</div><div class="vcfv" style="font-size:10px;font-family:var(--fm)"><span style="color:var(--amber)">${h.rx}</span> / <span style="color:var(--cyan)">${h.aff}</span> / <span style="color:var(--violet)">${h.prop}</span></div></div>
+        <div class="vcf"><div class="vcfl">MLR Status</div><div class="vcfv" style="color:var(--green)">✓ Approved</div></div>
+      </div>
+      <div class="vctags">
+        ${h.sig?`<span class="vtag" style="color:var(--amber);border-color:rgba(245,158,11,.2)">⚡ ${h.sig.replace(/_/g,' ')}</span>`:''}
+        ${h.kol?'<span class="vtag">🎤 KOL</span>':''}
+        <span class="vtag" style="color:var(--green);border-color:rgba(16,185,129,.2)">${h.form}</span>
+        <span class="vtag">Brand Rx: ${h.brx}</span>
+        <span class="vtag">Comp Rx: ${h.comp}</span>
+        <span class="vtag" style="color:var(--violet);border-color:rgba(139,92,246,.2)">Veeva Task Created</span>
+      </div>
+    </div>`).join('');
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+</script>
+</body>
+</html>

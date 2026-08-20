@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Call Plan Agent · Novartis Oncology</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --slate-950: #0c1120;
+  --slate-900: #111827;
+  --slate-800: #1e2a3a;
+  --slate-700: #2d3d52;
+  --slate-600: #3d5068;
+  --slate-400: #7a90a8;
+  --slate-300: #a8bccf;
+  --slate-100: #e8eef4;
+  --white: #ffffff;
+  --teal: #00d4aa;
+  --teal-dim: rgba(0,212,170,0.12);
+  --teal-glow: 0 0 24px rgba(0,212,170,0.25);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.1);
+  --green: #10b981;
+  --blue: #3b82f6;
+  --t1: #ef4444; --t2: #f59e0b; --t3: #10b981;
+  --border: rgba(255,255,255,0.06);
+  --border-bright: rgba(255,255,255,0.12);
+  --font-display: 'Clash Display', sans-serif;
+  --font-body: 'Cabinet Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font-body); background: var(--slate-950); color: var(--slate-100); display: flex; flex-direction: column; }
+
+/* NAV */
+nav {
+  height: 52px; background: var(--slate-900); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 0; flex-shrink: 0; position: relative; z-index: 100;
+}
+.nav-logo { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; color: var(--white); display: flex; align-items: center; gap: 10px; margin-right: 20px; }
+.nav-logo-icon { width: 28px; height: 28px; background: var(--teal); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.nav-pill { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; padding: 3px 9px; border-radius: 20px; background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+.nav-demo-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; padding: 3px 9px; border-radius: 20px; background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); margin-left: 8px; }
+.nav-sep { flex: 1; }
+.nav-rep { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-300); }
+.nav-rep-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--teal)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 340px 1fr; flex: 1; overflow: hidden; }
+
+/* LEFT PANEL */
+.left-panel { background: var(--slate-900); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.panel-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: 0.05em; color: var(--white); margin-bottom: 12px; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-btn { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-bright); background: none; color: var(--slate-400); cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(--teal); color: var(--teal); }
+.filter-btn.active { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+.filter-btn.t1a { background: rgba(239,68,68,0.1); border-color: var(--t1); color: var(--t1); }
+.filter-btn.t2a { background: rgba(245,158,11,0.1); border-color: var(--t2); color: var(--t2); }
+.filter-btn.t3a { background: rgba(16,185,129,0.1); border-color: var(--t3); color: var(--t3); }
+
+.hcp-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.hcp-list::-webkit-scrollbar { width: 4px; }
+.hcp-list::-webkit-scrollbar-thumb { background: var(--slate-700); border-radius: 2px; }
+
+.hcp-item { padding: 14px 20px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+.hcp-item:hover { background: rgba(255,255,255,0.03); }
+.hcp-item.active { background: rgba(0,212,170,0.06); border-left-color: var(--teal); }
+.hcp-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.hcp-item-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--white); line-height: 1.2; }
+.tier-badge { font-family: var(--font-mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; letter-spacing: 0.05em; }
+.tier-1 { background: rgba(239,68,68,0.15); color: var(--t1); border: 1px solid rgba(239,68,68,0.3); }
+.tier-2 { background: rgba(245,158,11,0.15); color: var(--t2); border: 1px solid rgba(245,158,11,0.3); }
+.tier-3 { background: rgba(16,185,129,0.15); color: var(--t3); border: 1px solid rgba(16,185,129,0.3); }
+.hcp-item-sub { font-size: 11px; color: var(--slate-400); margin-bottom: 8px; }
+.hcp-item-metrics { display: flex; align-items: center; gap: 10px; }
+.metric-chip { font-family: var(--font-mono); font-size: 10px; color: var(--slate-400); display: flex; align-items: center; gap: 3px; }
+.metric-chip .val { color: var(--slate-300); font-weight: 500; }
+.signal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 6px rgba(0,212,170,0.6); animation: pulse 2s infinite; margin-left: 2px; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.score-ring-wrap { position: relative; width: 36px; height: 36px; flex-shrink: 0; }
+.score-ring-wrap svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.score-ring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--white); }
+.hcp-divider { height: 1px; background: var(--border); margin: 0 20px; }
+
+/* RIGHT PANEL */
+.right-panel { display: flex; flex-direction: column; overflow: hidden; background: var(--slate-950); position: relative; }
+
+.welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--slate-400); text-align: center; padding: 40px; }
+.welcome-icon { width: 72px; height: 72px; border-radius: 20px; background: var(--slate-800); border: 1px solid var(--border-bright); display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 8px; }
+.welcome h2 { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--slate-300); }
+.welcome p { font-size: 14px; max-width: 340px; line-height: 1.6; }
+.welcome-hint { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--slate-600); margin-top: 8px; }
+
+.plan-wrap { flex: 1; overflow-y: auto; display: none; }
+.plan-wrap.visible { display: block; }
+.plan-wrap::-webkit-scrollbar { width: 4px; }
+.plan-wrap::-webkit-scrollbar-thumb { background: var(--slate-700); border-radius: 2px; }
+
+/* Plan header */
+.plan-top { padding: 20px 32px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; background: var(--slate-900); position: sticky; top: 0; z-index: 10; }
+.plan-top-left { flex: 1; }
+.plan-eyebrow { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--teal); margin-bottom: 6px; }
+.plan-hcp-name { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 4px; }
+.plan-hcp-meta { font-size: 13px; color: var(--slate-400); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.meta-sep { color: var(--slate-700); }
+.plan-top-actions { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+.action-btn { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border-bright); background: none; color: var(--slate-300); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.action-btn:hover { background: var(--slate-800); }
+.gen-btn { background: var(--teal); border-color: var(--teal); color: #000; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.gen-btn:hover { background: #00f0c2; transform: translateY(-1px); box-shadow: var(--teal-glow); }
+
+/* Stats strip */
+.hcp-stats-strip { display: grid; grid-template-columns: repeat(6,1fr); gap: 1px; background: var(--border); border-top: 1px solid var(--border); flex-shrink: 0; }
+.stat-strip-cell { background: var(--slate-900); padding: 11px 12px; text-align: center; }
+.stat-strip-val { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--white); line-height: 1; margin-bottom: 3px; }
+.stat-strip-lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate-400); }
+
+/* Loading */
+.loading-overlay { display: none; position: absolute; inset: 0; background: rgba(12,17,32,0.9); backdrop-filter: blur(4px); z-index: 20; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+.loading-overlay.visible { display: flex; }
+.loading-spinner { width: 40px; height: 40px; border: 2px solid rgba(0,212,170,0.2); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-msg { font-family: var(--font-mono); font-size: 13px; color: var(--teal); }
+.loading-steps { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+.ls-item { font-family: var(--font-mono); font-size: 11px; color: var(--slate-600); display: flex; align-items: center; gap: 8px; transition: color 0.3s; }
+.ls-item.done { color: var(--teal); }
+.ls-item.done::before { content: '✓'; }
+.ls-item:not(.done)::before { content: '○'; }
+
+/* Plan body */
+.plan-body { padding: 24px 32px; display: flex; flex-direction: column; gap: 18px; }
+.section-card { background: var(--slate-900); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; animation: cardIn 0.4s ease both; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.section-card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.02); }
+.section-icon { font-size: 15px; }
+.section-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--slate-400); }
+.section-tag { margin-left: auto; font-family: var(--font-mono); font-size: 9px; padding: 2px 8px; border-radius: 4px; background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+.section-body { padding: 16px 18px; }
+
+.objective-text { font-family: var(--font-display); font-size: 17px; font-weight: 500; color: var(--white); line-height: 1.5; }
+
+.opener-bubble { background: var(--slate-800); border-radius: 0 14px 14px 14px; padding: 16px 20px; font-size: 14px; line-height: 1.75; color: var(--slate-100); border: 1px solid var(--border-bright); position: relative; }
+.opener-bubble::before { content: '"'; position: absolute; top: -4px; left: 14px; font-family: var(--font-display); font-size: 52px; color: var(--teal); opacity: 0.35; line-height: 1; }
+
+.tp-list { display: flex; flex-direction: column; gap: 10px; }
+.tp-card { background: var(--slate-800); border-radius: 10px; padding: 14px 16px; border-left: 3px solid var(--blue); animation: cardIn 0.3s ease both; }
+.tp-num { font-family: var(--font-mono); font-size: 9px; color: var(--blue); letter-spacing: 0.1em; margin-bottom: 3px; }
+.tp-topic { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 5px; }
+.tp-message { font-size: 13px; color: var(--slate-300); line-height: 1.6; margin-bottom: 5px; }
+.tp-why { font-size: 12px; color: var(--slate-400); font-style: italic; display: flex; align-items: flex-start; gap: 5px; }
+.tp-why::before { content: '↳'; color: var(--teal); flex-shrink: 0; }
+
+.obj-list { display: flex; flex-direction: column; gap: 10px; }
+.obj-card { background: var(--slate-800); border-radius: 10px; overflow: hidden; }
+.obj-q { padding: 11px 14px; font-size: 13px; color: var(--amber); background: var(--amber-dim); display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+.obj-q::before { content: '?'; font-family: var(--font-mono); font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.obj-a { padding: 11px 14px; font-size: 13px; color: var(--slate-300); line-height: 1.6; display: flex; align-items: flex-start; gap: 8px; }
+.obj-a::before { content: '→'; color: var(--teal); flex-shrink: 0; margin-top: 1px; }
+
+.nba-card { background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(59,130,246,0.06)); border: 1px solid rgba(0,212,170,0.2); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; }
+.nba-icon-wrap { width: 44px; height: 44px; background: var(--teal-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; border: 1px solid rgba(0,212,170,0.2); }
+.nba-action { font-size: 14px; color: var(--white); font-weight: 500; margin-bottom: 4px; }
+.nba-timing { font-family: var(--font-mono); font-size: 11px; color: var(--teal); }
+
+.channel-row { display: flex; gap: 12px; }
+.channel-card { flex: 1; background: var(--slate-800); border-radius: 10px; padding: 14px 16px; border: 2px solid transparent; transition: border-color 0.2s; }
+.channel-card.recommended { border-color: var(--teal); }
+.channel-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.channel-icon { font-size: 20px; }
+.channel-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--white); }
+.channel-rec-badge { margin-left: auto; font-family: var(--font-mono); font-size: 9px; padding: 2px 7px; border-radius: 4px; background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.25); }
+.channel-reason { font-size: 12px; color: var(--slate-400); line-height: 1.5; }
+
+.signal-alert { background: rgba(0,212,170,0.07); border: 1px solid rgba(0,212,170,0.25); border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px; }
+.signal-alert-icon { font-size: 20px; flex-shrink: 0; }
+.signal-alert-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 4px; }
+.signal-alert-text { font-size: 13px; color: var(--slate-300); line-height: 1.6; }
+
+.notes-card { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--slate-300); line-height: 1.7; }
+.notes-card strong { color: var(--amber); }
+
+@media print {
+  nav, .left-panel, .plan-top-actions, .hcp-stats-strip { display: none !important; }
+  .layout { display: block; }
+  .plan-wrap { display: block !important; overflow: visible; height: auto; }
+  .right-panel { overflow: visible; height: auto; }
+  .section-card { break-inside: avoid; }
+  body, html { overflow: visible; height: auto; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">🏥</div>
+    Call Plan Agent
+  </div>
+  <div class="nav-pill">Oncology · Kisqali</div>
+  <div class="nav-demo-badge">⚡ DEMO MODE</div>
+  <div class="nav-sep"></div>
+  <div class="nav-rep">
+    <div class="nav-rep-avatar">AJ</div>
+    <span>Alex Johnson · Northeast</span>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- LEFT: HCP LIST -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="panel-title">Today's Call List — <span style="color:var(--slate-400);font-weight:400" id="today-date"></span></div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterTier('all',this)">All</button>
+        <button class="filter-btn" onclick="filterTier(1,this)">T1</button>
+        <button class="filter-btn" onclick="filterTier(2,this)">T2</button>
+        <button class="filter-btn" onclick="filterTier(3,this)">T3</button>
+        <button class="filter-btn" onclick="filterTier('signal',this)">⚡ Signal</button>
+      </div>
+    </div>
+    <div class="hcp-list" id="hcp-list"></div>
+  </div>
+
+  <!-- RIGHT: PLAN -->
+  <div class="right-panel">
+
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-msg" id="loading-msg">Building call plan...</div>
+      <div class="loading-steps">
+        <div class="ls-item" id="ls1">Pulling HCP profile & Rx data</div>
+        <div class="ls-item" id="ls2">Analyzing signals & triggers</div>
+        <div class="ls-item" id="ls3">Selecting approved messaging</div>
+        <div class="ls-item" id="ls4">Generating tailored call plan</div>
+      </div>
+    </div>
+
+    <div class="welcome" id="welcome-screen">
+      <div class="welcome-icon">📋</div>
+      <h2>Select an HCP to begin</h2>
+      <p>Click any HCP from the call list to instantly load their AI-powered, personalized call plan.</p>
+      <div class="welcome-hint">← Pick an HCP · View Plan · Call with confidence</div>
+    </div>
+
+    <div class="plan-wrap" id="plan-wrap">
+      <div class="plan-top">
+        <div class="plan-top-left">
+          <div class="plan-eyebrow">Call Plan · <span id="plan-date"></span></div>
+          <div class="plan-hcp-name" id="plan-hcp-name">—</div>
+          <div class="plan-hcp-meta">
+            <span id="plan-specialty">—</span>
+            <span class="meta-sep">·</span>
+            <span id="plan-territory">—</span>
+            <span class="meta-sep">·</span>
+            <span id="plan-tier-label"></span>
+          </div>
+        </div>
+        <div class="plan-top-actions">
+          <button class="action-btn" onclick="window.print()">↓ Print</button>
+          <button class="action-btn gen-btn" id="gen-btn" onclick="showPlan()">✦ View Call Plan</button>
+        </div>
+      </div>
+
+      <div class="hcp-stats-strip">
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-score">—</div><div class="stat-strip-lbl">Rx Score</div></div>
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-decile">—</div><div class="stat-strip-lbl">Rx Decile</div></div>
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-brandrx">—</div><div class="stat-strip-lbl">Brand Rx</div></div>
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-nps">—</div><div class="stat-strip-lbl">New Pt Starts</div></div>
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-calls">—</div><div class="stat-strip-lbl">Calls (QTD)</div></div>
+        <div class="stat-strip-cell"><div class="stat-strip-val" id="ss-form">—</div><div class="stat-strip-lbl">Formulary</div></div>
+      </div>
+
+      <div class="plan-body" id="plan-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATE ────────────────────────────────────────────────────────────
+const today = new Date();
+const dateStr = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+const dateShort = today.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+document.getElementById('today-date').textContent = dateShort;
+document.getElementById('plan-date').textContent = dateStr;
+
+// ─── HCP + CALL PLAN DATA ─────────────────────────────────────────────
+const HCPS = [
+  {
+    id:'hcp1', name:'Dr. Elena Vasquez', specialty:'Medical Oncology', territory:'Northeast',
+    tier:1, rx_score:88, rx_decile:9, brand_rx:42, total_rx:310, nps:8,
+    calls_qtd:2, formulary:'Preferred', signal:true, signal_type:'HIGH_NPS_SPIKE',
+    channel:'Field', days_since_call:45, competitor_rx:28,
+    plan: {
+      signal_alert: {
+        icon: '📈',
+        title: '⚡ Active Signal: High New Patient Starts Spike',
+        text: 'Dr. Vasquez has had a 35% month-over-month surge in new HR+/HER2− patient starts. This is the primary trigger for today\'s field visit. Lead with this signal — acknowledge her growth and position Kisqali as the backbone of her CDK4/6 practice.'
+      },
+      call_objective: 'Leverage the new patient start spike to deepen Kisqali\'s position as Dr. Vasquez\'s CDK4/6 inhibitor of choice and explore adding Kisqali to her first-line standard of care protocol.',
+      opener: 'Dr. Vasquez, I was looking at your patient activity and I have to say — your new HR+/HER2− starts have really picked up this quarter, which is exciting to see. I actually wanted to stop by specifically because of that, because I think there\'s a real opportunity to make sure those new patients are set up for the best long-term outcomes, and I\'d love to walk through the latest MONALEESA-7 OS data with you.',
+      talking_points: [
+        {
+          topic: 'Overall Survival Leadership',
+          message: 'The MONALEESA-7 data now shows the most mature OS benefit of any CDK4/6 inhibitor in premenopausal patients — 58.7 months median OS versus 48 months for endocrine therapy alone. Given how many pre-menopausal patients you\'re now seeing, this is directly applicable to your practice.',
+          rationale: 'Her NPS spike is predominantly pre-menopausal — MONALEESA-7\'s OS data is uniquely differentiated for her patient population.'
+        },
+        {
+          topic: 'Tolerability & Dosing',
+          message: 'Kisqali\'s once-daily dosing and the absence of required G-CSF prophylaxis means your new patients can stay on therapy longer — and in our real-world data, patients who stay on therapy longer have significantly better outcomes.',
+          rationale: 'New patients are often nervous about toxicity — this addresses adherence risk upfront.'
+        },
+        {
+          topic: 'Patient Support — Kisqali Connect',
+          message: 'For your new patient influx, the Kisqali Connect hub team can handle all prior auth, co-pay support, and onboarding in 48 hours or less. We can set up a direct line with your office coordinator today.',
+          rationale: 'A practice seeing 8 new starts/month has real administrative burden — this is a tangible value-add she will remember.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"I\'m already using multiple CDK4/6 inhibitors — I don\'t need to consolidate."',
+          response: 'That\'s completely fair, and I\'m not here to ask you to change what\'s working. What I would ask is whether your CDK4/6 choice is optimized for pre-menopausal patients specifically, because the OS data for that subgroup is really where Kisqali stands apart. Would you be open to walking through that data together?'
+        },
+        {
+          objection: '"The side effect profile gives my patients anxiety — especially the QT monitoring."',
+          response: 'That\'s a fair concern, and I hear it a lot. What I\'d share is that in clinical practice, QTc prolongation at grade 3 or higher occurs in under 4% of patients, and with the monitoring protocol in place, we\'ve been able to keep patients on therapy safely. Would it help if I connected you with our MSL who has worked through specific case management approaches with other oncologists in the region?'
+        }
+      ],
+      next_best_action: {
+        action: 'Schedule a 20-minute MSL scientific exchange on CDK4/6 sequencing — Dr. Vasquez previously expressed interest in this topic at ASCO.',
+        timing: 'Before leaving the office — book directly with her coordinator today'
+      },
+      channel: 'Field',
+      channel_rationale: 'Tier 1 HCP with active NPS signal and 45 days since last field visit — in-person engagement maximizes impact for this conversation.',
+      rep_notes: 'Dr. Vasquez is data-driven and responds best when you lead with trial outcomes. She can be skeptical of promotional framing — lean into the science. Her front desk coordinator is Maria, who is very helpful for scheduling MSL visits.'
+    }
+  },
+  {
+    id:'hcp2', name:'Dr. James Okafor', specialty:'Hematology/Oncology', territory:'Northeast',
+    tier:1, rx_score:76, rx_decile:8, brand_rx:28, total_rx:245, nps:5,
+    calls_qtd:3, formulary:'Non-Preferred', signal:true, signal_type:'FORMULARY_WIN',
+    channel:'Field', days_since_call:20, competitor_rx:55,
+    plan: {
+      signal_alert: {
+        icon: '✅',
+        title: '⚡ Active Signal: Formulary Win — BlueCross & Aetna',
+        text: 'Kisqali just achieved Preferred status on BlueCross and Aetna plans covering ~60% of Dr. Okafor\'s patient panel. This is the single most important access barrier he had. Lead with this news immediately — it directly removes his primary objection.'
+      },
+      call_objective: 'Announce the BlueCross/Aetna formulary win, eliminate the access barrier Dr. Okafor cited in the last call, and convert his high competitor Rx volume (55) to Kisqali starts.',
+      opener: 'Dr. Okafor, I have some really good news that I think is going to directly impact your practice — Kisqali just achieved Preferred formulary status at both BlueCross and Aetna, which covers the majority of your patient panel. I know access has been your number one concern, so I wanted to get in front of you as soon as this happened.',
+      talking_points: [
+        {
+          topic: 'Formulary Access — The Barrier Is Gone',
+          message: 'Effective this quarter, Kisqali is Preferred at BlueCross PPO, BlueCross HMO, and Aetna Commercial — that\'s approximately 62% of your HR+/HER2− patient panel. Prior authorization requirements have been significantly reduced, and co-pay assistance through Kisqali Connect covers the remainder.',
+          rationale: 'This was his #1 stated objection. Address it first, directly, with plan-specific data.'
+        },
+        {
+          topic: 'Competitor Switch Opportunity',
+          message: 'With 55 competitor CDK4/6 scripts in the last 12 months, there\'s a real opportunity to look at your current patients who may be struggling with access or tolerability issues and discuss switching. We have a transition support pathway and can work with your team on the paperwork.',
+          rationale: 'High competitor Rx with new formulary parity = conversion window. Be direct about the opportunity.'
+        },
+        {
+          topic: 'OS Data for Your Patient Profile',
+          message: 'Now that access is resolved, I want to make sure you\'re seeing the latest survival data — the MONALEESA-2 update shows a median OS of 63.9 months with Kisqali plus letrozole, versus 51.4 months with placebo. That\'s over a year of additional survival in first-line treatment.',
+          rationale: 'Hematology/Oncologists respond to hard outcome data — now that access is resolved, the science should drive the next decision.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"Even with formulary parity, prior auth is still a burden for my staff."',
+          response: 'I understand — and that\'s exactly why Kisqali Connect exists. We have a dedicated hub team that handles prior auth electronically and typically turns around approvals in 24–48 hours. I can introduce your office manager to our hub rep today if you have 5 minutes.'
+        },
+        {
+          objection: '"My patients are already stable on their current CDK4/6 — why switch?"',
+          response: 'For stable patients, I completely agree — no need to disrupt therapy. But for your new starts and any patients experiencing access issues or tolerability concerns on their current regimen, this is the right time to consider Kisqali. I can share our transition guide and the co-pay assistance calculator if that would help.'
+        }
+      ],
+      next_best_action: {
+        action: 'Introduce Dr. Okafor\'s office manager to the Kisqali Connect hub rep for a PA streamlining setup and leave the formulary win one-pager at the front desk.',
+        timing: 'During this visit — before leaving the practice today'
+      },
+      channel: 'Field',
+      channel_rationale: 'Formulary win is a high-impact news event that deserves a field visit — this is not a virtual message. Tier 1 HCP with high conversion potential.',
+      rep_notes: 'Dr. Okafor is a fast decision-maker but needs to trust that the access problem is truly solved. Bring the printed formulary coverage grid and Kisqali Connect one-pager. He has high competitor loyalty — emphasize the OS data gap, not just access.'
+    }
+  },
+  {
+    id:'hcp3', name:'Dr. Robert Simmons', specialty:'Medical Oncology', territory:'Northeast',
+    tier:1, rx_score:92, rx_decile:10, brand_rx:55, total_rx:380, nps:10,
+    calls_qtd:2, formulary:'Preferred', signal:true, signal_type:'CONGRESS_ACTIVITY',
+    channel:'Field', days_since_call:18, competitor_rx:35,
+    plan: {
+      signal_alert: {
+        icon: '🎤',
+        title: '⚡ Active Signal: ESMO 2024 Speaker Activity',
+        text: 'Dr. Simmons presented at ESMO 2024 on CDK4/6 inhibitor tolerability and QoL in older breast cancer patients. He is an emerging KOL with significant peer influence. This is an opportunity to deepen the relationship and explore speaker bureau and MSL engagement.'
+      },
+      call_objective: 'Deepen the KOL relationship with Dr. Simmons following his ESMO presentation, align on Kisqali\'s tolerability profile as a key message for his peer network, and explore speaker bureau participation.',
+      opener: 'Dr. Simmons, first of all — congratulations on your ESMO presentation. I actually went through your abstract on CDK4/6 tolerability in older patients and I thought the framing was really compelling. I\'d love to hear how the presentation landed with the audience, and I also wanted to share some new data points that I think align closely with the clinical story you were telling.',
+      talking_points: [
+        {
+          topic: 'Tolerability in Older Patients — Kisqali\'s Real-World Edge',
+          message: 'The long-term follow-up data from MONALEESA-3 specifically in patients 65+ shows that Kisqali\'s tolerability profile holds up over time, with no cumulative toxicity signals. Given your ESMO focus on this patient segment, this data could be a strong addition to your clinical narrative.',
+          rationale: 'His ESMO abstract was specifically on tolerability in older patients — this is a perfect scientific alignment moment.'
+        },
+        {
+          topic: 'OS Data — Mature & Differentiated',
+          message: 'Across all three MONALEESA trials, Kisqali is the only CDK4/6 inhibitor to demonstrate OS benefit in pre and postmenopausal patients. The MONALEESA-3 OS data now shows 53.7 months median OS versus 41.5 months — that\'s over a year of benefit in your postmenopausal patients.',
+          rationale: 'As a KOL, he needs the most mature, differentiated data points to speak credibly to peers.'
+        },
+        {
+          topic: 'MSL Partnership & Speaker Bureau',
+          message: 'Given your emerging voice in this space, we\'d love to explore a more formal partnership — whether that\'s a scientific exchange with our MSL team, access to pre-publication data, or joining the Kisqali speaker bureau for regional oncology programs. What would be most valuable to you?',
+          rationale: 'Decile 10 prescriber and active KOL — investing in this relationship has outsized peer influence returns.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"I\'m cautious about commercial relationships given my academic position."',
+          response: 'That\'s completely understandable, and I respect that. The MSL scientific exchange is entirely medical — non-promotional, focused on data. The speaker bureau is always optional and can be structured to fit your institution\'s policies. I can send over our speaker program guidelines for your review so you can see exactly what\'s involved.'
+        },
+        {
+          objection: '"I\'m already familiar with the Kisqali data — what\'s new?"',
+          response: 'Great question — the newest update is the MONALEESA-3 long-term OS follow-up specifically in patients 65+, which I think will be directly relevant to your ESMO narrative. I can leave you the data slides or we can set up a 30-minute deep dive with our MSL if you\'d like to go further.'
+        }
+      ],
+      next_best_action: {
+        action: 'Schedule a medical affairs MSL meeting to explore speaker bureau interest and share pre-publication MONALEESA long-term data.',
+        timing: 'Send MSL calendar invite within 24 hours of this visit'
+      },
+      channel: 'Field',
+      channel_rationale: 'KOL relationship management requires in-person engagement. Decile 10 prescriber with congress activity warrants dedicated field time.',
+      rep_notes: 'Dr. Simmons is academically oriented — avoid anything that feels like a promotional pitch. Lead with scientific curiosity and peer acknowledgment. He will respond well to being treated as a thought partner, not a target. Make him feel seen after his ESMO work.'
+    }
+  },
+  {
+    id:'hcp4', name:'Dr. Sandra Kim', specialty:'Breast Oncology', territory:'Northeast',
+    tier:2, rx_score:61, rx_decile:7, brand_rx:12, total_rx:140, nps:3,
+    calls_qtd:1, formulary:'Preferred', signal:false, signal_type:null,
+    channel:'Virtual', days_since_call:60, competitor_rx:30,
+    plan: {
+      signal_alert: null,
+      call_objective: 'Re-engage Dr. Kim after a 60-day gap, address her prior safety concern about QT monitoring, and increase Kisqali\'s share of her HR+/HER2− patient starts.',
+      opener: 'Dr. Kim, thanks for making time for this virtual call. It\'s been a couple of months since we connected — I wanted to check in on how your HR+/HER2− patients have been doing and share a quick update on Kisqali\'s long-term safety data that I think directly addresses some of the questions you raised last time.',
+      talking_points: [
+        {
+          topic: 'Long-Term Safety — No New Signals',
+          message: 'The 5-year follow-up data is now available and shows no new safety signals, no cumulative cardiac toxicity, and no increase in grade 3/4 events over time. The QTc monitoring protocol has also been streamlined — we have a simplified guide I can share with your nursing team today.',
+          rationale: 'She raised QT monitoring concerns in the prior call — directly addressing this with new long-term data is the most important thing on this call.'
+        },
+        {
+          topic: 'Preferred Formulary = No Access Friction',
+          message: 'Kisqali\'s Preferred formulary status means your patients have co-pay assistance available and prior auth is minimal. For a Tier 2 practice volume, this translates to less paperwork and faster time to first dose for your patients.',
+          rationale: 'Simplifying practice logistics is important for a breast oncologist managing high patient volume.'
+        },
+        {
+          topic: 'Real-World Data in Breast-Focused Practices',
+          message: 'We also have real-world evidence from breast oncology practices similar to yours showing strong adherence rates and outcomes that mirror the trial data. I can share a case set if that would be useful.',
+          rationale: 'Breast oncology specialists respond to practice-type-specific evidence rather than broad population data.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"The QT monitoring burden is too high for my nursing staff."',
+          response: 'I hear you — and that\'s the most common concern I get from breast oncology practices. We\'ve actually created a simplified monitoring protocol card specifically for nursing teams that reduces the documentation time significantly. Can I share that with your head nurse before we end today\'s call?'
+        },
+        {
+          objection: '"My patients are doing fine on their current therapy — I don\'t want to change."',
+          response: 'Absolutely — for stable patients, I\'m not suggesting any changes. What I\'d ask you to think about is your next 2-3 new HR+/HER2− starts, particularly any pre-menopausal patients, where the MONALEESA-7 OS data is really compelling. Would you be open to trying Kisqali for your next eligible new start?'
+        }
+      ],
+      next_best_action: {
+        action: 'Send the simplified QT monitoring protocol card and real-world adherence data PDF to Dr. Kim\'s office email.',
+        timing: 'Within 2 hours of the virtual call ending'
+      },
+      channel: 'Virtual',
+      channel_rationale: 'Dr. Kim\'s preferred channel is virtual. Tier 2 maintenance call — virtual is efficient and respects her time. Call gap of 60 days warrants re-engagement.',
+      rep_notes: 'Dr. Kim is cautious and deliberate — she won\'t be rushed. The QT monitoring concern is real and must be met with concrete resources, not reassurances. Bring the simplified monitoring card as a physical deliverable. She responds well to peer data from similar practice settings.'
+    }
+  },
+  {
+    id:'hcp5', name:'Dr. Angela Huang', specialty:'Gynecologic Oncology', territory:'Northeast',
+    tier:2, rx_score:79, rx_decile:8, brand_rx:33, total_rx:295, nps:6,
+    calls_qtd:3, formulary:'Preferred', signal:false, signal_type:null,
+    channel:'Field', days_since_call:30, competitor_rx:48,
+    plan: {
+      signal_alert: null,
+      call_objective: 'Grow Kisqali\'s share of wallet against high competitor volume (48 scripts) by reinforcing OS differentiation for Dr. Huang\'s gynecologic oncology patient mix, particularly in the context of her new practice group.',
+      opener: 'Dr. Huang, congratulations on joining the new practice group — that\'s a significant move. I imagine you\'re seeing a broader mix of patients now. I wanted to stop by and share some data that I think is particularly relevant to the patient population you\'re managing, especially given how the CDK4/6 inhibitor landscape has evolved.',
+      talking_points: [
+        {
+          topic: 'OS Differentiation vs. Competitors',
+          message: 'Kisqali now has OS data across three Phase III trials — the only CDK4/6 inhibitor to show OS benefit in both pre and postmenopausal patients. The competitor you\'re using most has not demonstrated OS benefit. For your patients, that\'s a meaningful clinical conversation to have.',
+          rationale: 'High competitor Rx of 48 — the OS differentiation argument is the most powerful scientific lever to shift prescribing behavior.'
+        },
+        {
+          topic: 'New Practice Group — Access Setup',
+          message: 'Now that you\'re in a new practice setting, it\'s worth making sure that your formulary contracts, prior auth pathways, and Kisqali Connect hub access are all set up for your new office. I can coordinate with your practice administrator to make sure there\'s no friction for your patients.',
+          rationale: 'New practice group = a chance to set up Kisqali as the default pathway before habits form.'
+        },
+        {
+          topic: 'Gynecologic Oncology Cross-Indication',
+          message: 'I also want to make sure you\'re aware of the growing body of evidence in hormone-sensitive gynecologic malignancies. Our MSL team has put together an overview I\'d love to share — there may be patients in your practice who are eligible beyond the breast oncology indication.',
+          rationale: 'Gynecologic oncologists often see patients with hormone-sensitive tumors beyond breast — expanding her thinking about patient eligibility.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"I\'ve been using a competitor CDK4/6 for years and my patients are doing well."',
+          response: 'That\'s great to hear — and I\'m not suggesting changing anything for stable patients. What I\'d love for you to consider is using Kisqali for your next eligible new start, specifically so you can compare the experience firsthand. The OS data gap really does matter at the patient level, and I think you\'ll notice the difference in your longer-term follow-up.'
+        },
+        {
+          objection: '"I\'m too busy getting settled in the new practice to think about changing formulary choices."',
+          response: 'Completely understand — and honestly, that\'s exactly why now is the right time to set up Kisqali as your default pathway, before workflows get locked in. It\'ll be much easier now than trying to change things after you\'re fully established. I can make the practice admin setup completely seamless for you.'
+        }
+      ],
+      next_best_action: {
+        action: 'Connect Dr. Huang\'s new practice administrator with Kisqali Connect to set up hub access, PA protocols, and co-pay pathways from day one.',
+        timing: 'Schedule practice admin intro call within this week'
+      },
+      channel: 'Field',
+      channel_rationale: 'New practice transition is a critical field engagement moment. High Rx volume HCP with competitor conversion opportunity warrants in-person presence.',
+      rep_notes: 'The new practice group is your angle — new environment means new habits can be formed. Don\'t come in asking her to change existing patients. Come in as a partner helping her set up the new practice for success. Bring a Kisqali Connect setup checklist as a practical leave-behind.'
+    }
+  },
+  {
+    id:'hcp6', name:'Dr. Thomas Briggs', specialty:'Hematology/Oncology', territory:'Northeast',
+    tier:2, rx_score:63, rx_decile:7, brand_rx:14, total_rx:160, nps:4,
+    calls_qtd:1, formulary:'Non-Preferred', signal:true, signal_type:'FORMULARY_LOSS',
+    channel:'Field', days_since_call:35, competitor_rx:70,
+    plan: {
+      signal_alert: {
+        icon: '⚠️',
+        title: '⚡ URGENT Signal: Formulary Loss — BlueCross Plan',
+        text: 'Kisqali has dropped to Non-Preferred status on the BlueCross PPO plan that covers ~45% of Dr. Briggs\' patients. This requires an immediate field visit. The goal is to provide a clear action plan for impacted patients and prevent switching to a competitor CDK4/6 inhibitor.'
+      },
+      call_objective: 'Contain the impact of the BlueCross formulary loss by providing Dr. Briggs with concrete tools to keep current Kisqali patients on therapy and prevent new patient starts from going to a competitor.',
+      opener: 'Dr. Briggs, thank you for fitting me in on short notice — I came by specifically because I know you\'ve had patients on Kisqali who are now hitting BlueCross access issues, and I want to make sure you and your team have everything you need to navigate this. I\'m not here to spin the situation — I know this is a real problem, and I want to help you solve it.',
+      talking_points: [
+        {
+          topic: 'Patient Continuity — Kisqali Connect Bridge Program',
+          message: 'For your current Kisqali patients who are affected by the BlueCross change, the Kisqali Connect bridge program can provide free medication for up to 90 days while we work through the prior authorization appeal. No patient needs to go without therapy because of this formulary change.',
+          rationale: 'The most urgent concern is his existing patients. Lead with the solution, not the problem.'
+        },
+        {
+          topic: 'Prior Auth Appeal Pathway',
+          message: 'For new starts and for patients whose PA is denied, we have a structured appeals toolkit — including medical necessity letters, clinical evidence packages, and a dedicated Novartis reimbursement support team. The appeal approval rate on Kisqali PAs is over 75% nationally.',
+          rationale: 'Dr. Briggs needs a concrete workflow, not reassurances. The 75% appeal approval rate is a meaningful data point.'
+        },
+        {
+          topic: 'Why Staying on Kisqali Matters Clinically',
+          message: 'I want to make sure this is a clinical conversation, not just an access one. Switching CDK4/6 inhibitors mid-treatment has no evidence of benefit and carries real risks — patients who discontinue therapy early show significantly worse long-term outcomes. The OS data for Kisqali is the most mature in the class.',
+          rationale: 'With high competitor Rx (70), there\'s a risk he defaults to the competitor for new starts. Reinforce clinical rationale to stay.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"This is too much administrative work for my team — it\'s easier to just switch patients."',
+          response: 'I completely understand the frustration, and I want to be direct: we do not want to create administrative burden for your practice. That\'s why I\'m here today with the bridge program paperwork pre-filled and the appeals toolkit ready. I can work with your office manager right now to take as much of this off your team\'s plate as possible. Can I spend 15 minutes with her today?'
+        },
+        {
+          objection: '"Why should I keep using Kisqali if access is going to be this hard?"',
+          response: 'That\'s a fair question, and I respect you asking it directly. The honest answer is: Kisqali has the strongest OS data in the class, and switching your patients mid-treatment could compromise the outcomes you\'ve already built toward. I\'m personally committed to making the access problem solvable — and if at any point we can\'t solve it for a specific patient, I will tell you clearly.'
+        }
+      ],
+      next_best_action: {
+        action: 'Meet directly with Dr. Briggs\' office manager to complete bridge program enrollment for all affected patients and submit PA appeals for the top 5 impacted cases.',
+        timing: 'Do not leave the office until at least 3 bridge enrollments are initiated'
+      },
+      channel: 'Field',
+      channel_rationale: 'URGENT formulary loss — this situation demands an immediate in-person visit. Virtual is not appropriate for a crisis access situation.',
+      rep_notes: 'This is a damage control visit. Your credibility depends on how well you execute, not what you promise. Come prepared with: bridge program forms pre-filled for his top Kisqali patients, the PA appeals toolkit in hand, and a direct line to the Kisqali Connect team. Do not leave without initiating at least one bridge program enrollment.'
+    }
+  },
+  {
+    id:'hcp7', name:'Dr. Priya Nair', specialty:'Medical Oncology', territory:'Northeast',
+    tier:3, rx_score:38, rx_decile:4, brand_rx:4, total_rx:55, nps:1,
+    calls_qtd:0, formulary:'Non-Formulary', signal:false, signal_type:null,
+    channel:'Virtual', days_since_call:90, competitor_rx:30,
+    plan: {
+      signal_alert: null,
+      call_objective: 'Maintain Kisqali awareness and check formulary and patient eligibility status after a 90-day contact gap. Keep the call brief — goal is relationship maintenance, not conversion.',
+      opener: 'Dr. Nair, thanks for a few minutes of your time — it\'s been a few months since we\'ve connected and I just wanted to check in briefly. I know you\'ve had some access challenges with Kisqali in your patient panel, and I wanted to see if anything has changed on the formulary side and share a quick update.',
+      talking_points: [
+        {
+          topic: 'Formulary Status Check',
+          message: 'I want to make sure you have the most current picture on Kisqali\'s formulary status at the major plans your patients use. There have been some positive changes at several regional plans this quarter that may open up new access pathways for eligible patients.',
+          rationale: 'Non-formulary status is the primary barrier — check if any plans in her network have updated coverage.'
+        },
+        {
+          topic: 'Patient Assistance — Free Drug for Uninsured or Non-Covered Patients',
+          message: 'For patients where Kisqali is not covered, the Novartis patient assistance program provides the medication at no cost for eligible patients who meet income thresholds. This may apply to some of your patients who were previously excluded.',
+          rationale: 'With Non-Formulary status, patient assistance is the most practical pathway to generating any new starts.'
+        },
+        {
+          topic: 'Brief Efficacy Reminder',
+          message: 'Just to keep the clinical picture current — Kisqali remains the only CDK4/6 inhibitor with OS data across pre and postmenopausal patients. When the access situation does open up for any of your HR+/HER2− patients, that survival data is worth remembering.',
+          rationale: 'Keep the brand salient without being pushy — this is a maintenance touch.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"My patients can\'t afford CDK4/6 inhibitors even with assistance."',
+          response: 'I understand, and that\'s a real barrier. The Kisqali Connect team is specifically set up to work through all available assistance options — Medicaid, co-pay programs, and free drug programs — and they can often find a pathway even in complex situations. Would it be okay if I sent you the referral information so you can pass it to your financial counselor?'
+        },
+        {
+          objection: '"I barely prescribe CDK4/6 inhibitors — this isn\'t a priority for me."',
+          response: 'That\'s fair, and I appreciate your honesty. I\'ll keep this brief — I just want to make sure that when the right patient comes along, you have the access pathways and clinical data top of mind. Is there anything specific that would make Kisqali easier to use in your practice if the opportunity arose?'
+        }
+      ],
+      next_best_action: {
+        action: 'Email a one-page formulary update and patient assistance eligibility checklist — keep the next touchpoint virtual and brief.',
+        timing: 'Within 24 hours of this call'
+      },
+      channel: 'Virtual',
+      channel_rationale: 'Tier 3 watch-list HCP — virtual touchpoint is appropriate. Field visit not warranted given low Rx volume and Non-Formulary status.',
+      rep_notes: 'Keep this call under 10 minutes. Dr. Nair is a Tier 3 target — your time investment should reflect that. The goal is presence and awareness, not a full call cycle. Leave with one action item: the patient assistance referral pathway. Do not over-engineer this interaction.'
+    }
+  },
+  {
+    id:'hcp8', name:'Dr. Aisha Patel', specialty:'Medical Oncology', territory:'Northeast',
+    tier:1, rx_score:85, rx_decile:9, brand_rx:50, total_rx:330, nps:9,
+    calls_qtd:2, formulary:'Preferred', signal:true, signal_type:'HIGH_NPS_SPIKE',
+    channel:'Field', days_since_call:16, competitor_rx:22,
+    plan: {
+      signal_alert: {
+        icon: '🚀',
+        title: '⚡ Active Signal: Consecutive NPS Spike (+40% MoM)',
+        text: 'Dr. Patel has recorded a 40% month-over-month surge in new patient starts for a second consecutive month — making her one of the highest-growth HR+/HER2− prescribers in the territory. This visit is about capitalizing on momentum and ensuring zero friction for her growing patient flow.'
+      },
+      call_objective: 'Celebrate and reinforce Dr. Patel\'s Kisqali momentum, remove any remaining barriers to continued growth, and explore whether she is ready to participate in peer education or speaker programs to amplify her voice in the region.',
+      opener: 'Dr. Patel, I have to say — your patient volume over the last two months has been remarkable. You\'re one of the top-growing Kisqali prescribers in the entire Northeast right now, and I wanted to come by in person to make sure we\'re giving your practice everything it needs to keep that momentum going.',
+      talking_points: [
+        {
+          topic: 'Your Practice is Ahead of the Data',
+          message: 'Your real-world outcomes are tracking closely with the MONALEESA trial data — patients on Kisqali in practices like yours are showing strong adherence and tolerability. The once-daily dosing and the Kisqali Connect support model are clearly working in your setting.',
+          rationale: 'Positive reinforcement tied to outcomes — helps her feel that her prescribing decisions are validated by data.'
+        },
+        {
+          topic: 'MSL Deep-Dive Opportunity',
+          message: 'Given how actively you\'re prescribing and the questions you\'re generating in your patient panel, we\'d love to set up a dedicated session with our MSL to go deep on the long-term data, sequencing questions, and anything else that would sharpen your clinical toolkit.',
+          rationale: 'High-volume prescribers benefit from MSL partnership — it deepens commitment and provides scientific support for complex cases.'
+        },
+        {
+          topic: 'Peer Education & Speaker Opportunity',
+          message: 'You\'re generating real results that other oncologists in the region would genuinely learn from. If you\'re open to it, we\'d love to explore having you share your experience with CDK4/6 inhibitor sequencing and tolerability management at a regional program. This would be on your terms, your schedule.',
+          rationale: 'Lowest competitor Rx (22) + consecutive NPS spikes = brand champion. The speaker conversation is now appropriate.'
+        },
+      ],
+      objection_handling: [
+        {
+          objection: '"I\'m too busy to take on speaker commitments right now."',
+          response: 'Completely understood — the programs are designed to be minimal time commitment on your end. We handle all logistics, and the format can be as simple as a 30-minute virtual case discussion with 10 peers. There\'s no obligation, and I\'d never want to add to your workload. Would it be okay if I just sent you the program overview so you can see what it looks like?'
+        },
+        {
+          objection: '"What if my patient volume drops — I don\'t want to be overexposed."',
+          response: 'That\'s a thoughtful way to think about it, and I appreciate the self-awareness. The speaker program is not about committing to a specific volume — it\'s about sharing clinical experience. Your current outcomes are the story, and they\'re compelling regardless of what next month\'s numbers look like.'
+        }
+      ],
+      next_best_action: {
+        action: 'Confirm MSL scientific exchange session and send speaker bureau program overview for her review.',
+        timing: 'MSL calendar invite same day · Speaker overview email within 48 hours'
+      },
+      channel: 'Field',
+      channel_rationale: 'Back-to-back NPS spikes in a Tier 1 Preferred prescriber — this is a brand champion moment. Field visit acknowledges her growth and strengthens the relationship.',
+      rep_notes: 'This is your best call of the day — come energized. Dr. Patel is loyal, growing, and scientifically engaged. The ask today is bigger than a script: it\'s about building a long-term partnership. Don\'t oversell. Let the data and her own success do the talking. She is ready for the MSL conversation and likely ready for the speaker conversation if asked in the right way.'
+    }
+  },
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────
+let selectedHCP = null;
+let currentFilter = 'all';
+
+// ─── RENDER HCP LIST ────────────────────────────────────────────────────
+function renderList() {
+  const container = document.getElementById('hcp-list');
+  let hcps = [...HCPS];
+  if (currentFilter === 'signal') hcps = hcps.filter(h => h.signal);
+  else if (currentFilter !== 'all') hcps = hcps.filter(h => h.tier === currentFilter);
+
+  container.innerHTML = hcps.map((h, i) => {
+    const r = 16;
+    const circ = 2 * Math.PI * r;
+    const dash = (h.rx_score / 100) * circ;
+    const ringColor = ['','#ef4444','#f59e0b','#10b981'][h.tier];
+    const isActive = selectedHCP && selectedHCP.id === h.id;
+    return `
+      <div class="hcp-item ${isActive ? 'active' : ''}" onclick="selectHCP('${h.id}')">
+        <div class="hcp-item-top">
+          <div>
+            <div class="hcp-item-name">${h.name}</div>
+            <div class="hcp-item-sub">${h.specialty} · ${h.channel === 'Field' ? '🚗' : '💻'} ${h.channel}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${h.signal ? `<div class="signal-dot" title="${h.signal_type}"></div>` : ''}
+            <span class="tier-badge tier-${h.tier}">T${h.tier}</span>
+          </div>
+        </div>
+        <div class="hcp-item-metrics">
+          <div class="metric-chip">Rx <span class="val">${h.rx_decile}</span>/10</div>
+          <div class="metric-chip">Brand <span class="val">${h.brand_rx}</span></div>
+          <div class="metric-chip">NPS <span class="val">${h.nps}</span></div>
+          <div style="margin-left:auto">
+            <div class="score-ring-wrap">
+              <svg width="36" height="36" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2.5"/>
+                <circle cx="18" cy="18" r="${r}" fill="none" stroke="${ringColor}" stroke-width="2.5"
+                  stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"/>
+              </svg>
+              <div class="score-ring-val">${h.rx_score}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${i < hcps.length - 1 ? '<div class="hcp-divider"></div>' : ''}
+    `;
+  }).join('');
+}
+
+function filterTier(tier, btn) {
+  currentFilter = tier;
+  document.querySelectorAll('.filter-btn').forEach(b => b.className = 'filter-btn');
+  if (tier === 'all') btn.className = 'filter-btn active';
+  else if (tier === 1) btn.className = 'filter-btn t1a';
+  else if (tier === 2) btn.className = 'filter-btn t2a';
+  else if (tier === 3) btn.className = 'filter-btn t3a';
+  else btn.className = 'filter-btn active';
+  renderList();
+}
+
+// ─── SELECT HCP ─────────────────────────────────────────────────────────
+function selectHCP(id) {
+  selectedHCP = HCPS.find(h => h.id === id);
+  renderList();
+
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('plan-wrap').classList.add('visible');
+  document.getElementById('plan-body').innerHTML = '';
+
+  // Update header
+  document.getElementById('plan-hcp-name').textContent = selectedHCP.name;
+  document.getElementById('plan-specialty').textContent = selectedHCP.specialty;
+  document.getElementById('plan-territory').textContent = selectedHCP.territory;
+
+  const tierColors = ['','#ef4444','#f59e0b','#10b981'];
+  const tierLabels = ['','Tier 1 · High Priority','Tier 2 · Medium Priority','Tier 3 · Watch List'];
+  document.getElementById('plan-tier-label').innerHTML =
+    `<span style="color:${tierColors[selectedHCP.tier]};font-family:var(--font-mono);font-size:11px">${tierLabels[selectedHCP.tier]}</span>`;
+
+  // Stats
+  document.getElementById('ss-score').textContent = selectedHCP.rx_score;
+  document.getElementById('ss-decile').textContent = `${selectedHCP.rx_decile}/10`;
+  document.getElementById('ss-brandrx').textContent = selectedHCP.brand_rx;
+  document.getElementById('ss-nps').textContent = selectedHCP.nps;
+  document.getElementById('ss-calls').textContent = selectedHCP.calls_qtd;
+  const form = selectedHCP.formulary;
+  document.getElementById('ss-form').innerHTML = form === 'Preferred'
+    ? `<span style="color:var(--green)">✓</span>`
+    : `<span style="font-size:11px;color:var(--amber)">${form === 'Non-Preferred' ? 'Non-Pref' : 'Non-Form'}</span>`;
+
+  // Auto-show plan with animation
+  showPlan();
+}
+
+// ─── SHOW PLAN ──────────────────────────────────────────────────────────
+async function showPlan() {
+  if (!selectedHCP) return;
+
+  const overlay = document.getElementById('loading-overlay');
+  const steps = ['ls1','ls2','ls3','ls4'];
+  steps.forEach(s => document.getElementById(s).className = 'ls-item');
+  overlay.classList.add('visible');
+
+  for (let i = 0; i < steps.length; i++) {
+    await sleep(420);
+    document.getElementById(steps[i]).classList.add('done');
+  }
+  await sleep(300);
+  overlay.classList.remove('visible');
+
+  renderPlan(selectedHCP.plan);
+}
+
+// ─── RENDER PLAN ────────────────────────────────────────────────────────
+function renderPlan(p) {
+  const h = selectedHCP;
+  const chIcon = h.channel === 'Field' ? '🚗' : '💻';
+  const altCh = h.channel === 'Field' ? 'Virtual' : 'Field';
+  const altIcon = h.channel === 'Field' ? '💻' : '🚗';
+  const d = (i) => `animation-delay:${i * 0.07}s`;
+
+  document.getElementById('plan-body').innerHTML = `
+
+    ${p.signal_alert ? `
+    <div class="section-card" style="${d(0)}">
+      <div class="section-card-header">
+        <span class="section-icon">${p.signal_alert.icon}</span>
+        <span class="section-label">Active Signal</span>
+        <span class="section-tag" style="background:rgba(0,212,170,0.15);color:var(--teal);border-color:rgba(0,212,170,0.3)">URGENT</span>
+      </div>
+      <div class="section-body">
+        <div class="signal-alert">
+          <div class="signal-alert-icon">${p.signal_alert.icon}</div>
+          <div>
+            <div class="signal-alert-title">${p.signal_alert.title}</div>
+            <div class="signal-alert-text">${p.signal_alert.text}</div>
+          </div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="section-card" style="${d(1)}">
+      <div class="section-card-header">
+        <span class="section-icon">🎯</span>
+        <span class="section-label">Call Objective</span>
+      </div>
+      <div class="section-body">
+        <div class="objective-text">${p.call_objective}</div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(2)}">
+      <div class="section-card-header">
+        <span class="section-icon">📞</span>
+        <span class="section-label">Opening Line</span>
+        <span class="section-tag">Word-for-word</span>
+      </div>
+      <div class="section-body">
+        <div class="opener-bubble">${p.opener}</div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(3)}">
+      <div class="section-card-header">
+        <span class="section-icon">💬</span>
+        <span class="section-label">Talking Points</span>
+        <span class="section-tag">Approved Messaging</span>
+      </div>
+      <div class="section-body">
+        <div class="tp-list">
+          ${p.talking_points.map((tp, i) => `
+            <div class="tp-card" style="${d(i * 0.05)}">
+              <div class="tp-num">POINT ${i+1}</div>
+              <div class="tp-topic">${tp.topic}</div>
+              <div class="tp-message">${tp.message}</div>
+              <div class="tp-why">${tp.rationale}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(4)}">
+      <div class="section-card-header">
+        <span class="section-icon">🛡️</span>
+        <span class="section-label">Objection Handling</span>
+      </div>
+      <div class="section-body">
+        <div class="obj-list">
+          ${p.objection_handling.map(o => `
+            <div class="obj-card">
+              <div class="obj-q">${o.objection}</div>
+              <div class="obj-a">${o.response}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(5)}">
+      <div class="section-card-header">
+        <span class="section-icon">✅</span>
+        <span class="section-label">Next Best Action</span>
+      </div>
+      <div class="section-body">
+        <div class="nba-card">
+          <div class="nba-icon-wrap">✅</div>
+          <div>
+            <div class="nba-action">${p.next_best_action.action}</div>
+            <div class="nba-timing">${p.next_best_action.timing}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(6)}">
+      <div class="section-card-header">
+        <span class="section-icon">${chIcon}</span>
+        <span class="section-label">Channel Recommendation</span>
+      </div>
+      <div class="section-body">
+        <div class="channel-row">
+          <div class="channel-card recommended">
+            <div class="channel-card-top">
+              <span class="channel-icon">${chIcon}</span>
+              <span class="channel-name">${p.channel}</span>
+              <span class="channel-rec-badge">RECOMMENDED</span>
+            </div>
+            <div class="channel-reason">${p.channel_rationale}</div>
+          </div>
+          <div class="channel-card" style="opacity:0.4">
+            <div class="channel-card-top">
+              <span class="channel-icon">${altIcon}</span>
+              <span class="channel-name">${altCh}</span>
+            </div>
+            <div class="channel-reason">Not the primary channel for this HCP today.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" style="${d(7)}">
+      <div class="section-card-header">
+        <span class="section-icon">📝</span>
+        <span class="section-label">Coaching Note</span>
+        <span class="section-tag">For Rep Only</span>
+      </div>
+      <div class="section-body">
+        <div class="notes-card">${p.rep_notes}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── UTIL ───────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+// ─── INIT ───────────────────────────────────────────────────────────────
+renderList();
+</script>
+
+</body>
+</html>
