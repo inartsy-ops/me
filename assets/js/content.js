@@ -36,7 +36,7 @@ window.SITE = {
     updated: 'August 2026',
     highlights: [
       { value: '10+', label: 'Years in AI, product & data science' },
-      { value: '$30M+', label: 'Revenue enabled through AI-driven targeting' },
+      { value: '$50M+', label: 'Revenue enabled through various Product, programs and Applications' },
       { value: '1', label: 'US Patent — AI/ML web-tracking classifier' },
     ],
   },
