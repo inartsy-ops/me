@@ -570,11 +570,11 @@ html[data-theme="dark"] .hero-glow { opacity: 0.5; }
    because the thumb's height comes from aspect-ratio, which counts as
    indefinite, and the iframe would collapse to its default 300x150. */
 .thumb-live {
-  position: absolute; top: 0; left: 0;
+  position: absolute; top: 50%; left: 50%;
   width: 1280px; height: 800px;
   border: 0;
-  transform: scale(0.26);   /* replaced by the measured value in main.js */
-  transform-origin: 0 0;
+  transform: translate(-50%, -50%) scale(0.26);   /* scale factor replaced by the measured value in main.js */
+  transform-origin: center center;
   pointer-events: none;     /* the card owns the click */
   opacity: 0;
   transition: opacity 0.5s var(--ease);

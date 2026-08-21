@@ -356,7 +356,7 @@
       var box = frame.parentNode;
       var w = box ? box.clientWidth : 0;
       if (!w) return; // still hidden — the observer will call us again
-      frame.style.transform = 'scale(' + (w / THUMB_W) + ')';
+      frame.style.transform = 'translate(-50%, -50%) scale(' + (w / THUMB_W) + ')';
       frame.classList.add('is-sized');
     };
 
