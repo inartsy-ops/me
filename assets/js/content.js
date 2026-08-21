@@ -14,9 +14,7 @@ window.SITE = {
     name: 'Lavina Choudhary',
     initials: 'LC',
     role: 'I build the AI products and programs that decide who pharma field teams see, what they say, and when they get there.',
-    // Blank while the line above carries it — leaving both set printed the
-    // same sentence twice in the hero.
-    tagline: '',
+    tagline: 'I repeatedly take complex, emerging AI capabilities and turn them into scalable, measurable business products people can actually use.',
     location: '', // hidden while it's blank — the separator dot hides with it
     status: 'Open to conversations',
     // One string per paragraph. Add or remove entries freely.
