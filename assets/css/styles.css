@@ -483,6 +483,23 @@ html[data-theme="dark"] .hero-glow { opacity: 0.5; }
 /* ----------------------------------------------------------------- about */
 .about-grid { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
 
+.about-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+.about-photo {
+  width: clamp(96px, 12vw, 152px);
+  height: clamp(96px, 12vw, 152px);
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+@media (max-width: 640px) {
+  .about-main { grid-template-columns: 1fr; justify-items: start; }
+}
+
 .lede {
   font-family: var(--font-display);
   /* Sized to sit with the hero tagline and the rest of the page rather than
