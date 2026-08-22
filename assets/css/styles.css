@@ -490,15 +490,15 @@ html[data-theme="dark"] .hero-glow { opacity: 0.5; }
   align-items: start;
 }
 .about-photo {
-  width: clamp(96px, 9vw, 128px);
-  height: clamp(96px, 9vw, 128px);
+  width: clamp(140px, 14vw, 200px);
+  height: clamp(140px, 14vw, 200px);
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--line);
   opacity: 0.85;
   filter: grayscale(20%);
 }
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .about-main { grid-template-columns: 1fr; justify-items: start; }
   .about-photo { order: -1; }
 }
