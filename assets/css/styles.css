@@ -487,11 +487,11 @@ html[data-theme="dark"] .hero-glow { opacity: 0.5; }
   display: grid;
   grid-template-columns: 1fr auto;
   gap: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: center;
+  align-items: start;
 }
 .about-photo {
-  width: clamp(64px, 6vw, 84px);
-  height: clamp(64px, 6vw, 84px);
+  width: clamp(96px, 9vw, 128px);
+  height: clamp(96px, 9vw, 128px);
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--line);
