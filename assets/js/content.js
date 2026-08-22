@@ -13,8 +13,8 @@ window.SITE = {
   person: {
     name: 'Lavina Choudhary',
     initials: 'LC',
-    role: 'I build the AI products and programs that decide who pharma field teams see, what they say, and when they get there.',
-    tagline: 'I repeatedly take complex, emerging AI capabilities and turn them into scalable, measurable business products people can actually use.',
+    role: 'Building the AI products and programs that decide who pharma field teams see, what they say, and when they get there.',
+    tagline: 'Repeatedly taking complex, emerging AI capabilities and turning them into scalable, measurable business products people can actually use.',
     location: '', // hidden while it's blank — the separator dot hides with it
     status: 'Open to conversations',
     // One string per paragraph. Add or remove entries freely.
