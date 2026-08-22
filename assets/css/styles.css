@@ -485,19 +485,22 @@ html[data-theme="dark"] .hero-glow { opacity: 0.5; }
 
 .about-main {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr auto;
   gap: clamp(1.5rem, 3vw, 2.5rem);
   align-items: start;
 }
 .about-photo {
-  width: clamp(96px, 12vw, 152px);
-  height: clamp(96px, 12vw, 152px);
+  width: clamp(64px, 6vw, 84px);
+  height: clamp(64px, 6vw, 84px);
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--line);
+  opacity: 0.85;
+  filter: grayscale(20%);
 }
 @media (max-width: 640px) {
   .about-main { grid-template-columns: 1fr; justify-items: start; }
+  .about-photo { order: -1; }
 }
 
 .lede {
