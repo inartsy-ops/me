@@ -69,8 +69,8 @@ window.SITE = {
       body: 'Predictive models, ML-driven automation, and applied GenAI on AWS Bedrock — from risk reduction to process efficiency to real-time reporting on model performance.',
     },
     {
-      title: 'Programmatic & CDP',
-      body: 'Audience targeting, probabilistic identity, and CDP-ready customer intelligence — built on some of the largest deterministic commercial datasets in market.',
+      title: 'CDP & Salesforce',
+      body: 'Audience targeting, probabilistic identity, and CDP-ready customer intelligence — built on Salesforce CDP and some of the largest deterministic commercial datasets in market.',
     },
   ],
 
